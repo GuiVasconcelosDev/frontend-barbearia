@@ -251,7 +251,7 @@ function TelaCliente() {
       .catch(err => setErro(err.message));
   }, [slug]);
 
-  const agendar = (e) => {
+ const agendar = (e) => {
     e.preventDefault();
     setMensagem("A agendar...");
     
@@ -271,9 +271,30 @@ function TelaCliente() {
       return res.json();
     })
     .then(() => {
+      // === INÍCIO DA MÁGICA DO WHATSAPP ===
+      // Descobre o nome do serviço e do barbeiro escolhidos
+      const nomeServico = servicos.find(s => s.id === parseInt(servicoId))?.nome || "Serviço";
+      const nomeBarbeiro = barbeiros.find(b => b.id === parseInt(barbeiroId))?.nome || "Profissional";
+      
+      // Formata a data (DD/MM/AAAA HH:MM)
+      const dataFormatada = new Date(dataHora).toLocaleString('pt-BR');
+      
+      // Monta o texto que vai chegar no WhatsApp do dono da barbearia
+      const textoMsg = `Olá! Acabei de agendar um horário pelo sistema.\n\n*Detalhes do Agendamento:*\n👤 Nome: ${clienteNome}\n✂️ Serviço: ${nomeServico}\n💈 Profissional: ${nomeBarbeiro}\n📅 Data/Hora: ${dataFormatada}`;
+      
+      // Limpa tudo que não for número no telefone e cria o link do WhatsApp
+      const numeroWhats = barbearia.telefone.replace(/\D/g, ''); 
+      const linkWhats = `https://wa.me/55${numeroWhats}?text=${encodeURIComponent(textoMsg)}`;
+      
+      // Abre o WhatsApp numa nova aba automaticamente
+      window.open(linkWhats, '_blank');
+      // === FIM DA MÁGICA DO WHATSAPP ===
+
       alert("✅ Horário Confirmado!");
       setMensagem("");
-      setClienteNome(''); setClienteTelefone(''); setDataHora('');
+      setClienteNome(''); 
+      setClienteTelefone(''); 
+      setDataHora('');
     })
     .catch(err => setMensagem("❌ " + err.message));
   };
