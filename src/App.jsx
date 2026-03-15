@@ -16,6 +16,7 @@ function TelaLogin() {
   const [senha, setSenha] = useState('');
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
+  const [chavePix, setChavePix] = useState('');
 
   // Se já estiver logado, manda direto pro painel
   useEffect(() => {
@@ -31,7 +32,7 @@ function TelaLogin() {
       fetch(`${API_URL}/api/barbearias`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, slug, telefone, email, senha })
+        body: JSON.stringify({ nome, slug, telefone, email, senha, chavePix })
       })
       .then(res => res.ok ? res.json() : Promise.reject("Erro ao criar conta."))
       .then(() => {
@@ -67,6 +68,7 @@ function TelaLogin() {
             <>
               <input type="text" placeholder="Nome da Barbearia" value={nome} onChange={e=>setNome(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
               <input type="text" placeholder="Telefone" value={telefone} onChange={e=>setTelefone(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
+              <input type="text" placeholder="Sua Chave Pix (CPF/Email/Celular)" value={chavePix} onChange={e=>setChavePix(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
             </>
           )}
           <input type="email" placeholder="E-mail" value={email} onChange={e=>setEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
@@ -120,6 +122,18 @@ function TelaPainel() {
   const sair = () => {
     localStorage.removeItem('barbeariaLogada');
     navigate('/');
+  };
+
+  const concluirAgendamento = (id) => {
+    if(window.confirm("Comfirmar a conclusão deste serviço?")) {
+      fetch(`${API_URL}/api/agendamnetos/${id}`, {
+        method: 'DELETE'
+      }).then((res) => {
+        if(res.ok) {
+          setAgendamentos(agendamentos.filter(ag => ag.id !== id));
+        }
+      });
+    }
   };
 
   const adicionarServico = (e) => {
@@ -196,13 +210,18 @@ function TelaPainel() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {agendamentos.length === 0 ? <p>Nenhum agendamento ainda.</p> : 
           agendamentos.map(ag => (
-            <div key={ag.id} style={{ padding: '15px', backgroundColor: '#f8fafc', borderLeft: '4px solid #3b82f6', borderRadius: '4px', display: 'flex', justifyContent: 'space-between' }}>
+            <div key={ag.id} style={{ padding: '15px', backgroundColor: '#f8fafc', borderLeft: '4px solid #3b82f6', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <strong>{ag.cliente.nome}</strong> - 📱 {ag.cliente.telefone} <br/>
                 ✂️ {ag.servico.nome} com {ag.barbeiro.nome}
               </div>
-              <div style={{ fontWeight: 'bold', color: '#1d4ed8' }}>
-                {new Date(ag.dataHoraInicio).toLocaleString('pt-BR')}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                <span style={{ fontWeight: 'bold', color: '#1d4ed8' }}>
+                  {new Date(ag.dataHoraInicio).toLocaleString('pt-BR')}
+                </span>
+                <button onClick={() => concluirAgendamento(ag.id)} style={{ padding: '6px 12px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>
+                  ✅ Concluir
+                </button>
               </div>
             </div>
           ))
