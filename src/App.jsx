@@ -126,7 +126,7 @@ function TelaPainel() {
 
   const concluirAgendamento = (id) => {
     if(window.confirm("Comfirmar a conclusão deste serviço?")) {
-      fetch(`${API_URL}/api/agendamnetos/${id}`, {
+      fetch(`${API_URL}/api/agendamentos/${id}`, {
         method: 'DELETE'
       }).then((res) => {
         if(res.ok) {
