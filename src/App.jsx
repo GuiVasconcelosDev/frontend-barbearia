@@ -97,6 +97,12 @@ function TelaPainel() {
   const [agendamentos, setAgendamentos] = useState([]);
   const [servicos, setServicos] = useState([]);
   const [barbeiros, setBarbeiros] = useState([]);
+  // Separa quem já cortou de quem ainda vai cortar
+  const agendamentosPendentes = agendamentos.filter(ag => !ag.concluido);
+  const agendamentosConcluidos = agendamentos.filter(ag => ag.concluido);
+
+  // Soma o preço de todos os serviços concluídos
+  const faturamentoTotal = agendamentosConcluidos.reduce((total, ag) => total + (ag.servico.preco || 0), 0);
 
   // Estados para Novos Cadastros
   const [novoServicoNome, setNovoServicoNome] = useState('');
@@ -125,12 +131,13 @@ function TelaPainel() {
   };
 
   const concluirAgendamento = (id) => {
-    if(window.confirm("Comfirmar a conclusão deste serviço?")) {
-      fetch(`${API_URL}/api/agendamentos/${id}`, {
-        method: 'DELETE'
+    if(window.confirm("Confirmar a conclusão e adicionar o valor ao caixa?")) {
+      fetch(`${API_URL}/api/agendamentos/${id}/concluir`, {
+        method: 'POST'
       }).then((res) => {
         if(res.ok) {
-          setAgendamentos(agendamentos.filter(ag => ag.id !== id));
+          // Atualiza a tela na hora, passando o agendamento para o "cofre"
+          setAgendamentos(agendamentos.map(ag => ag.id === id ? { ...ag, concluido: true } : ag));
         }
       });
     }
@@ -177,6 +184,20 @@ function TelaPainel() {
           <button onClick={sair} style={{ padding: '10px 15px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Sair</button>
         </div>
       </div>
+
+      {/* --- INÍCIO DO DASHBOARD FINANCEIRO --- */}
+      <div style={{ display: 'flex', gap: '20px', marginBottom: '25px', flexWrap: 'wrap' }}>
+        <div style={{ flex: '1', minWidth: '200px', backgroundColor: '#10b981', color: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'normal', opacity: 0.9 }}>💰 Faturamento Total</h3>
+          <h2 style={{ margin: '10px 0 0 0', fontSize: '36px' }}>R$ {faturamentoTotal.toFixed(2)}</h2>
+        </div>
+        
+        <div style={{ flex: '1', minWidth: '200px', backgroundColor: '#3b82f6', color: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'normal', opacity: 0.9 }}>✂️ Cortes Concluídos</h3>
+          <h2 style={{ margin: '10px 0 0 0', fontSize: '36px' }}>{agendamentosConcluidos.length}</h2>
+        </div>
+      </div>
+      {/* --- FIM DO DASHBOARD FINANCEIRO --- */}
       
       <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
         {/* Formulário de Serviços */}
@@ -208,8 +229,8 @@ function TelaPainel() {
 
       <h2 style={{ marginTop: '30px' }}>📅 Agenda de Hoje</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {agendamentos.length === 0 ? <p>Nenhum agendamento ainda.</p> : 
-          agendamentos.map(ag => (
+        {agendamentosPendentes.length === 0 ? <p>Nenhum agendamento pendente.</p> : 
+          agendamentosPendentes.map(ag => (
             <div key={ag.id} style={{ padding: '15px', backgroundColor: '#f8fafc', borderLeft: '4px solid #3b82f6', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <strong>{ag.cliente.nome}</strong> - 📱 {ag.cliente.telefone} <br/>
