@@ -42,7 +42,7 @@ function App() {
     e.preventDefault();
     setMensagemAviso("A verificar credenciais...");
     
-    fetch('http://localhost:8080/api/barbearias/login', {
+    fetch('barbearia-saas-api-production.up.railway.app/api/barbearias/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: emailLogin, senha: senhaLogin })
@@ -71,7 +71,7 @@ function App() {
       email: emailCadastro, senha: senhaCadastro 
     };
 
-    fetch('http://localhost:8080/api/barbearias', {
+    fetch('barbearia-saas-api-production.up.railway.app/api/barbearias', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(novaBarbearia)
@@ -98,9 +98,9 @@ function App() {
 
   const carregarDadosDoPainel = (idBarbearia) => {
     Promise.all([
-      fetch(`http://localhost:8080/api/servicos/barbearia/${idBarbearia}`).then(res => res.json()),
-      fetch(`http://localhost:8080/api/barbeiros/barbearia/${idBarbearia}`).then(res => res.json()),
-      fetch(`http://localhost:8080/api/agendamentos/barbearia/${idBarbearia}`).then(res => res.json())
+      fetch(`barbearia-saas-api-production.up.railway.app/api/servicos/barbearia/${idBarbearia}`).then(res => res.json()),
+      fetch(`barbearia-saas-api-production.up.railway.app/api/barbeiros/barbearia/${idBarbearia}`).then(res => res.json()),
+      fetch(`barbearia-saas-api-production.up.railway.app/api/agendamentos/barbearia/${idBarbearia}`).then(res => res.json())
     ]).then(([dadosServicos, dadosBarbeiros, dadosAgendamentos]) => {
       setServicos(dadosServicos);
       setBarbeiros(dadosBarbeiros);
@@ -111,14 +111,14 @@ function App() {
   const guardarServico = (e) => {
     e.preventDefault();
     const novoServico = { nome: nomeServico, preco: parseFloat(precoServico), duracaoMinutos: parseInt(duracaoServico), barbearia: { id: barbeariaLogada.id } };
-    fetch('http://localhost:8080/api/servicos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(novoServico) })
+    fetch('barbearia-saas-api-production.up.railway.app/api/servicos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(novoServico) })
     .then(res => res.json())
     .then(servicoSalvo => { setServicos([...servicos, servicoSalvo]); setNomeServico(''); setPrecoServico(''); setDuracaoServico(''); });
   };
 
   const guardarBarbeiro = (e) => {
     e.preventDefault();
-    fetch('http://localhost:8080/api/barbeiros', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: nomeBarbeiro, barbearia: { id: barbeariaLogada.id } }) })
+    fetch('barbearia-saas-api-production.up.railway.app/api/barbeiros', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: nomeBarbeiro, barbearia: { id: barbeariaLogada.id } }) })
     .then(res => res.json())
     .then(barbeiroSalvo => { setBarbeiros([...barbeiros, barbeiroSalvo]); setNomeBarbeiro(''); });
   };
@@ -138,7 +138,7 @@ function App() {
       dataHoraInicio: dataHoraAgendamento
     };
 
-    fetch('http://localhost:8080/api/agendamentos', {
+    fetch('barbearia-saas-api-production.up.railway.app/api/agendamentos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(novoAgendamento)
