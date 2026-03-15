@@ -321,34 +321,76 @@ function TelaCliente() {
   if (!barbearia) return <h3 style={{textAlign: 'center'}}>A carregar...</h3>;
 
   return (
-    <div style={{ padding: '30px', maxWidth: '500px', margin: '0 auto', fontFamily: 'system-ui' }}>
-      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-        <h1>✂️ {barbearia.nome}</h1>
-        <p>{barbearia.endereco} | 📞 {barbearia.telefone}</p>
+    <div style={{ padding: '30px', maxWidth: '600px', margin: '0 auto', fontFamily: 'system-ui' }}>
+      <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+        <h1 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px' }}>✂️ {barbearia.nome}</h1>
+        <p style={{ color: '#64748b', margin: 0 }}>{barbearia.endereco} | 📞 {barbearia.telefone}</p>
       </div>
 
-      <div style={{ backgroundColor: '#fff', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ marginTop: 0, textAlign: 'center' }}>Agende seu horário</h2>
+      <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+        <h2 style={{ marginTop: 0, textAlign: 'center', marginBottom: '25px', color: '#0f172a' }}>Agende seu horário</h2>
         <p style={{ color: '#dc2626', fontWeight: 'bold', textAlign: 'center' }}>{mensagem}</p>
 
-        <form onSubmit={agendar} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <input type="text" placeholder="Seu Nome" value={clienteNome} onChange={e=>setClienteNome(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
-          <input type="tel" placeholder="Seu WhatsApp" value={clienteTelefone} onChange={e=>setClienteTelefone(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
+        <form onSubmit={agendar} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          <select value={servicoId} onChange={e=>setServicoId(e.target.value)} required style={{ padding: '12px', borderRadius: '6px' }}>
-            <option value="">-- Serviço --</option>
-            {servicos.map(s => <option key={s.id} value={s.id}>{s.nome} - R$ {s.preco}</option>)}
-          </select>
+          {/* Dados do Cliente */}
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <input type="text" placeholder="Seu Nome" value={clienteNome} onChange={e=>setClienteNome(e.target.value)} required style={{ flex: 1, padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px' }} />
+            <input type="tel" placeholder="Seu WhatsApp" value={clienteTelefone} onChange={e=>setClienteTelefone(e.target.value)} required style={{ flex: 1, padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px' }} />
+          </div>
+          
+          {/* CARDS DE SERVIÇOS */}
+          <div>
+            <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>1. Escolha o Serviço:</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
+              {servicos.map(s => (
+                <div 
+                  key={s.id} 
+                  onClick={() => setServicoId(s.id)}
+                  style={{ 
+                    padding: '15px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
+                    border: parseInt(servicoId) === s.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                    backgroundColor: parseInt(servicoId) === s.id ? '#eff6ff' : '#fff'
+                  }}
+                >
+                  <div style={{ fontWeight: 'bold', color: '#1e293b', fontSize: '16px' }}>{s.nome}</div>
+                  <div style={{ color: '#3b82f6', fontWeight: 'bold', marginTop: '5px' }}>R$ {s.preco}</div>
+                </div>
+              ))}
+            </div>
+            {/* Input invisível só para forçar o preenchimento obrigatório */}
+            <input type="text" value={servicoId} readOnly required style={{ width: 0, height: 0, border: 'none', padding: 0, margin: 0, opacity: 0 }} />
+          </div>
 
-          <select value={barbeiroId} onChange={e=>setBarbeiroId(e.target.value)} required style={{ padding: '12px', borderRadius: '6px' }}>
-            <option value="">-- Profissional --</option>
-            {barbeiros.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
-          </select>
+          {/* CARDS DE BARBEIROS */}
+          <div>
+            <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>2. Escolha o Profissional:</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
+              {barbeiros.map(b => (
+                <div 
+                  key={b.id} 
+                  onClick={() => setBarbeiroId(b.id)}
+                  style={{ 
+                    padding: '12px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
+                    border: parseInt(barbeiroId) === b.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                    backgroundColor: parseInt(barbeiroId) === b.id ? '#eff6ff' : '#fff'
+                  }}
+                >
+                  <div style={{ fontWeight: 'bold', color: '#1e293b' }}>💈 {b.nome}</div>
+                </div>
+              ))}
+            </div>
+            <input type="text" value={barbeiroId} readOnly required style={{ width: 0, height: 0, border: 'none', padding: 0, margin: 0, opacity: 0 }} />
+          </div>
 
-          <input type="datetime-local" value={dataHora} onChange={e=>setDataHora(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
+          {/* Data e Hora */}
+          <div>
+            <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>3. Escolha a Data e Hora:</label>
+            <input type="datetime-local" value={dataHora} onChange={e=>setDataHora(e.target.value)} required style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px', boxSizing: 'border-box' }} />
+          </div>
 
-          <button type="submit" style={{ padding: '15px', backgroundColor: '#1d4ed8', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
-            Confirmar
+          <button type="submit" style={{ marginTop: '10px', padding: '16px', backgroundColor: '#1d4ed8', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', boxShadow: '0 4px 6px rgba(29, 78, 216, 0.3)' }}>
+            Confirmar Agendamento
           </button>
         </form>
       </div>
