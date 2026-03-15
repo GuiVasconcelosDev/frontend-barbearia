@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useParams, Link } from 'react-router-dom';
+import './App.css';
 
 const API_URL = 'https://barbearia-saas-api-production.up.railway.app';
 
@@ -186,7 +187,7 @@ function TelaPainel() {
       </div>
 
       {/* --- INÍCIO DO DASHBOARD FINANCEIRO --- */}
-      <div style={{ display: 'flex', gap: '20px', marginBottom: '25px', flexWrap: 'wrap' }}>
+      <div className="dash-container" style={{ display: 'flex', gap: '20px', marginBottom: '25px', flexWrap: 'wrap' }}>
         <div style={{ flex: '1', minWidth: '200px', backgroundColor: '#10b981', color: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
           <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'normal', opacity: 0.9 }}>💰 Faturamento Total</h3>
           <h2 style={{ margin: '10px 0 0 0', fontSize: '36px' }}>R$ {faturamentoTotal.toFixed(2)}</h2>
@@ -231,12 +232,12 @@ function TelaPainel() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {agendamentosPendentes.length === 0 ? <p>Nenhum agendamento pendente.</p> : 
           agendamentosPendentes.map(ag => (
-            <div key={ag.id} style={{ padding: '15px', backgroundColor: '#f8fafc', borderLeft: '4px solid #3b82f6', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div key={ag.id} className="agendamento-card" style={{ padding: '15px', backgroundColor: '#f8fafc', borderLeft: '4px solid #3b82f6', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <strong>{ag.cliente.nome}</strong> - 📱 {ag.cliente.telefone} <br/>
                 ✂️ {ag.servico.nome} com {ag.barbeiro.nome}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+              <div className="agendamento-acoes" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
                 <span style={{ fontWeight: 'bold', color: '#1d4ed8' }}>
                   {new Date(ag.dataHoraInicio).toLocaleString('pt-BR')}
                 </span>
