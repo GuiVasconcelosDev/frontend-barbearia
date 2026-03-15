@@ -111,14 +111,14 @@ function App() {
   const guardarServico = (e) => {
     e.preventDefault();
     const novoServico = { nome: nomeServico, preco: parseFloat(precoServico), duracaoMinutos: parseInt(duracaoServico), barbearia: { id: barbeariaLogada.id } };
-    fetch('barbearia-saas-api-production.up.railway.app/api/servicos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(novoServico) })
+    fetch('https://barbearia-saas-api-production.up.railway.app/api/servicos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(novoServico) })
     .then(res => res.json())
     .then(servicoSalvo => { setServicos([...servicos, servicoSalvo]); setNomeServico(''); setPrecoServico(''); setDuracaoServico(''); });
   };
 
   const guardarBarbeiro = (e) => {
     e.preventDefault();
-    fetch('barbearia-saas-api-production.up.railway.app/api/barbeiros', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: nomeBarbeiro, barbearia: { id: barbeariaLogada.id } }) })
+    fetch('https://barbearia-saas-api-production.up.railway.app/api/barbeiros', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: nomeBarbeiro, barbearia: { id: barbeariaLogada.id } }) })
     .then(res => res.json())
     .then(barbeiroSalvo => { setBarbeiros([...barbeiros, barbeiroSalvo]); setNomeBarbeiro(''); });
   };
