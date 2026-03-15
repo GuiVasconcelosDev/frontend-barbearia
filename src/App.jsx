@@ -42,7 +42,7 @@ function App() {
     e.preventDefault();
     setMensagemAviso("A verificar credenciais...");
     
-    fetch('barbearia-saas-api-production.up.railway.app/api/barbearias/login', {
+    fetch('https://barbearia-saas-api-production.up.railway.app/api/barbearias/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: emailLogin, senha: senhaLogin })
@@ -98,9 +98,9 @@ function App() {
 
   const carregarDadosDoPainel = (idBarbearia) => {
     Promise.all([
-      fetch(`barbearia-saas-api-production.up.railway.app/api/servicos/barbearia/${idBarbearia}`).then(res => res.json()),
-      fetch(`barbearia-saas-api-production.up.railway.app/api/barbeiros/barbearia/${idBarbearia}`).then(res => res.json()),
-      fetch(`barbearia-saas-api-production.up.railway.app/api/agendamentos/barbearia/${idBarbearia}`).then(res => res.json())
+      fetch(`https://barbearia-saas-api-production.up.railway.app/api/servicos/barbearia/${idBarbearia}`).then(res => res.json()),
+      fetch(`https://barbearia-saas-api-production.up.railway.app/api/barbeiros/barbearia/${idBarbearia}`).then(res => res.json()),
+      fetch(`https://barbearia-saas-api-production.up.railway.app/api/agendamentos/barbearia/${idBarbearia}`).then(res => res.json())
     ]).then(([dadosServicos, dadosBarbeiros, dadosAgendamentos]) => {
       setServicos(dadosServicos);
       setBarbeiros(dadosBarbeiros);
@@ -138,7 +138,7 @@ function App() {
       dataHoraInicio: dataHoraAgendamento
     };
 
-    fetch('barbearia-saas-api-production.up.railway.app/api/agendamentos', {
+    fetch('https://barbearia-saas-api-production.up.railway.app/api/agendamentos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(novoAgendamento)
