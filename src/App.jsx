@@ -71,7 +71,7 @@ function App() {
       email: emailCadastro, senha: senhaCadastro 
     };
 
-    fetch('barbearia-saas-api-production.up.railway.app/api/barbearias', {
+    fetch('https://barbearia-saas-api-production.up.railway.app/api/barbearias', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(novaBarbearia)
