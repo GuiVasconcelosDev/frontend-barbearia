@@ -93,20 +93,28 @@ function TelaPainel() {
   const navigate = useNavigate();
   const [barbearia, setBarbearia] = useState(null);
   const [agendamentos, setAgendamentos] = useState([]);
+  const [servicos, setServicos] = useState([]);
+  const [barbeiros, setBarbeiros] = useState([]);
+
+  // Estados para Novos Cadastros
+  const [novoServicoNome, setNovoServicoNome] = useState('');
+  const [novoServicoPreco, setNovoServicoPreco] = useState('');
+  const [novoServicoDuracao, setNovoServicoDuracao] = useState('');
+  const [novoBarbeiroNome, setNovoBarbeiroNome] = useState('');
 
   useEffect(() => {
     const dadosSalvos = localStorage.getItem('barbeariaLogada');
     if (!dadosSalvos) {
-      navigate('/'); // Se tentar acessar o painel sem login, é expulso para a Home!
+      navigate('/'); 
       return;
     }
     const barbeariaLogada = JSON.parse(dadosSalvos);
     setBarbearia(barbeariaLogada);
 
-    // Carregar apenas os agendamentos para manter o código limpo aqui
-    fetch(`${API_URL}/api/agendamentos/barbearia/${barbeariaLogada.id}`)
-      .then(res => res.json())
-      .then(dados => setAgendamentos(dados));
+    // Carregar tudo da barbearia logada
+    fetch(`${API_URL}/api/agendamentos/barbearia/${barbeariaLogada.id}`).then(r => r.json()).then(setAgendamentos);
+    fetch(`${API_URL}/api/servicos/barbearia/${barbeariaLogada.id}`).then(r => r.json()).then(setServicos);
+    fetch(`${API_URL}/api/barbeiros/barbearia/${barbeariaLogada.id}`).then(r => r.json()).then(setBarbeiros);
   }, [navigate]);
 
   const sair = () => {
@@ -114,35 +122,95 @@ function TelaPainel() {
     navigate('/');
   };
 
+  const adicionarServico = (e) => {
+    e.preventDefault();
+    fetch(`${API_URL}/api/servicos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: novoServicoNome, preco: novoServicoPreco, duracaoMinutos: novoServicoDuracao, barbearia: { id: barbearia.id }
+      })
+    }).then(() => {
+      alert('Serviço adicionado!');
+      setNovoServicoNome(''); setNovoServicoPreco(''); setNovoServicoDuracao('');
+      // Recarrega a lista
+      fetch(`${API_URL}/api/servicos/barbearia/${barbearia.id}`).then(r => r.json()).then(setServicos);
+    });
+  };
+
+  const adicionarBarbeiro = (e) => {
+    e.preventDefault();
+    fetch(`${API_URL}/api/barbeiros`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome: novoBarbeiroNome, ativo: true, barbearia: { id: barbearia.id } })
+    }).then(() => {
+      alert('Barbeiro adicionado!');
+      setNovoBarbeiroNome('');
+      // Recarrega a lista
+      fetch(`${API_URL}/api/barbeiros/barbearia/${barbearia.id}`).then(r => r.json()).then(setBarbeiros);
+    });
+  };
+
   if (!barbearia) return null;
 
   return (
     <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', fontFamily: 'system-ui' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #eee', paddingBottom: '15px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #eee', paddingBottom: '15px', marginBottom: '20px' }}>
         <h1>Painel: {barbearia.nome}</h1>
         <div style={{display: 'flex', gap: '10px'}}>
-          {/* O Link mágico para a página pública dele! */}
           <Link to={`/${barbearia.slug}`} target="_blank" style={{ padding: '10px 15px', backgroundColor: '#8b5cf6', color: 'white', textDecoration: 'none', borderRadius: '6px', fontWeight: 'bold' }}>🌍 Ver Meu Site</Link>
           <button onClick={sair} style={{ padding: '10px 15px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Sair</button>
         </div>
       </div>
       
-      <h2>📅 Agenda de Hoje</h2>
+      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+        {/* Formulário de Serviços */}
+        <div style={{ flex: '1', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+          <h3>✂️ Adicionar Serviço</h3>
+          <form onSubmit={adicionarServico} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <input type="text" placeholder="Ex: Corte Degradê" value={novoServicoNome} onChange={e=>setNovoServicoNome(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
+            <input type="number" placeholder="Preço (Ex: 35)" value={novoServicoPreco} onChange={e=>setNovoServicoPreco(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
+            <input type="number" placeholder="Duração em Minutos (Ex: 40)" value={novoServicoDuracao} onChange={e=>setNovoServicoDuracao(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
+            <button type="submit" style={{ padding: '10px', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Serviço</button>
+          </form>
+          <ul style={{ marginTop: '15px', paddingLeft: '20px' }}>
+            {servicos.map(s => <li key={s.id}>{s.nome} - R$ {s.preco} ({s.duracaoMinutos} min)</li>)}
+          </ul>
+        </div>
+
+        {/* Formulário de Barbeiros */}
+        <div style={{ flex: '1', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+          <h3>💈 Adicionar Profissional</h3>
+          <form onSubmit={adicionarBarbeiro} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <input type="text" placeholder="Nome do Barbeiro" value={novoBarbeiroNome} onChange={e=>setNovoBarbeiroNome(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
+            <button type="submit" style={{ padding: '10px', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Barbeiro</button>
+          </form>
+          <ul style={{ marginTop: '15px', paddingLeft: '20px' }}>
+            {barbeiros.map(b => <li key={b.id}>{b.nome}</li>)}
+          </ul>
+        </div>
+      </div>
+
+      <h2 style={{ marginTop: '30px' }}>📅 Agenda de Hoje</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {agendamentos.length === 0 ? <p>Nenhum agendamento ainda.</p> : 
           agendamentos.map(ag => (
-            <div key={ag.id} style={{ padding: '15px', backgroundColor: '#f8fafc', borderLeft: '4px solid #3b82f6', borderRadius: '4px' }}>
-              <strong>{ag.cliente.nome}</strong> - {new Date(ag.dataHoraInicio).toLocaleString('pt-BR')} <br/>
-              ✂️ {ag.servico.nome} com {ag.barbeiro.nome}
+            <div key={ag.id} style={{ padding: '15px', backgroundColor: '#f8fafc', borderLeft: '4px solid #3b82f6', borderRadius: '4px', display: 'flex', justifyContent: 'space-between' }}>
+              <div>
+                <strong>{ag.cliente.nome}</strong> - 📱 {ag.cliente.telefone} <br/>
+                ✂️ {ag.servico.nome} com {ag.barbeiro.nome}
+              </div>
+              <div style={{ fontWeight: 'bold', color: '#1d4ed8' }}>
+                {new Date(ag.dataHoraInicio).toLocaleString('pt-BR')}
+              </div>
             </div>
           ))
         }
       </div>
-      <p style={{marginTop: '30px', color: '#666'}}>* O cadastro de serviços e barbeiros foi omitido neste snippet por brevidade, mas funciona da mesma forma!</p>
     </div>
   );
 }
-
 // ==========================================
 // 3. TELA PÚBLICA DO CLIENTE (Rota: /:slug )
 // ==========================================
