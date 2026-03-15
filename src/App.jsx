@@ -290,26 +290,25 @@ function TelaCliente() {
       return res.json();
     })
     .then(() => {
-      // === INÍCIO DA MÁGICA DO WHATSAPP ===
-      // Descobre o nome do serviço e do barbeiro escolhidos
-      const nomeServico = servicos.find(s => s.id === parseInt(servicoId))?.nome || "Serviço";
+      // Descobre o nome e o PREÇO do serviço
+      const servicoEscolhido = servicos.find(s => s.id === parseInt(servicoId));
+      const nomeServico = servicoEscolhido?.nome || "Serviço";
+      const precoServico = servicoEscolhido?.preco || 0;
       const nomeBarbeiro = barbeiros.find(b => b.id === parseInt(barbeiroId))?.nome || "Profissional";
       
-      // Formata a data (DD/MM/AAAA HH:MM)
       const dataFormatada = new Date(dataHora).toLocaleString('pt-BR');
       
-      // Monta o texto que vai chegar no WhatsApp do dono da barbearia
-      const textoMsg = `Olá! Acabei de agendar um horário pelo sistema.\n\n*Detalhes do Agendamento:*\n👤 Nome: ${clienteNome}\n✂️ Serviço: ${nomeServico}\n💈 Profissional: ${nomeBarbeiro}\n📅 Data/Hora: ${dataFormatada}`;
+      // 1. Mostra o alerta com a Chave Pix para o cliente copiar
+      alert(`✅ Horário Reservado!\n\nPara confirmar, faça um Pix de R$ ${precoServico} para a chave abaixo:\n\n🔑 ${barbearia.chavePix}\n\nClique em OK para enviar o comprovante no WhatsApp do barbeiro.`);
+
+      // 2. Monta o texto já pedindo o comprovante
+      const textoMsg = `Olá! Acabei de agendar um horário.\n\n*Detalhes:*\n👤 Nome: ${clienteNome}\n✂️ Serviço: ${nomeServico}\n💈 Profissional: ${nomeBarbeiro}\n📅 Data/Hora: ${dataFormatada}\n💰 Valor: R$ ${precoServico}\n\n*Segue abaixo o meu comprovante do Pix:*`;
       
-      // Limpa tudo que não for número no telefone e cria o link do WhatsApp
       const numeroWhats = barbearia.telefone.replace(/\D/g, ''); 
       const linkWhats = `https://wa.me/55${numeroWhats}?text=${encodeURIComponent(textoMsg)}`;
       
-      // Abre o WhatsApp numa nova aba automaticamente
       window.open(linkWhats, '_blank');
-      // === FIM DA MÁGICA DO WHATSAPP ===
 
-      alert("✅ Horário Confirmado!");
       setMensagem("");
       setClienteNome(''); 
       setClienteTelefone(''); 
