@@ -19,7 +19,7 @@ function TelaLogin() {
   const [telefone, setTelefone] = useState('');
   const [chavePix, setChavePix] = useState('');
 
-  // Se já estiver logado, manda direto pro painel
+  
   useEffect(() => {
     if (localStorage.getItem('barbeariaLogada')) navigate('/painel');
   }, [navigate]);
@@ -31,17 +31,25 @@ function TelaLogin() {
     if (modoCadastro) {
       const slug = nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ /g, '-');
       fetch(`${API_URL}/api/barbearias`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, slug, telefone, email, senha, chavePix })
-      })
-      .then(res => res.ok ? res.json() : Promise.reject("Erro ao criar conta."))
-      .then(() => {
-        alert("Conta criada! Faça login.");
-        setModoCadastro(false);
-        setMensagem("");
-      })
-      .catch(err => setMensagem("❌ " + err));
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ nome, slug, telefone, email, senha, chavePix })
+    })
+    .then(async (res) => {
+      if (!res.ok) {
+        const mensagemErro = await res.text();
+        throw new Error(mensagemErro); 
+      }
+      return res.json(); 
+    })
+    .then((novaBarbearia) => {
+      alert("✅ Conta criada com sucesso! Faça o login para acessar o painel.");
+    })
+    .catch((erro) => {
+      alert(`❌ ${erro.message}`);
+    });
     } else {
       fetch(`${API_URL}/api/barbearias/login`, {
         method: 'POST',
