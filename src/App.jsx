@@ -127,6 +127,11 @@ function TelaPainel() {
   const [encaixeNome, setEncaixeNome] = useState('');
   const [encaixeServicoId, setEncaixeServicoId] = useState('');
   const [encaixeBarbeiroId, setEncaixeBarbeiroId] = useState('');
+  
+  // Estados para Configurar Tempo Premium
+  const [configServicoId, setConfigServicoId] = useState('');
+  const [configBarbeiroId, setConfigBarbeiroId] = useState('');
+  const [configDuracao, setConfigDuracao] = useState('');
 
   useEffect(() => {
     const dadosSalvos = localStorage.getItem('barbeariaLogada');
@@ -228,6 +233,24 @@ function TelaPainel() {
     }).catch(err => alert("❌ Erro ao encaixar: " + err.message));
   };
 
+  // NOVA FUNÇÃO: Salvar o Tempo Personalizado
+  const configurarTempoPersonalizado = (e) => {
+    e.preventDefault();
+    fetch(`${API_URL}/api/barbeiro-servicos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        barbeiro: { id: parseInt(configBarbeiroId) },
+        servico: { id: parseInt(configServicoId) },
+        duracaoMinutos: parseInt(configDuracao)
+      })
+    }).then(async res => {
+      if(!res.ok) throw new Error("Erro ao salvar o tempo.");
+      alert('✅ Tempo personalizado configurado com sucesso!');
+      setConfigDuracao('');
+    }).catch(err => alert("❌ " + err.message));
+  };
+
   if (!barbearia) return null;
 
   return (
@@ -261,11 +284,11 @@ function TelaPainel() {
           <form onSubmit={adicionarServico} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <input type="text" placeholder="Ex: Corte Degradê" value={novoServicoNome} onChange={e=>setNovoServicoNome(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
             <input type="number" placeholder="Preço (Ex: 35)" value={novoServicoPreco} onChange={e=>setNovoServicoPreco(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
-            <input type="number" placeholder="Duração em Minutos (Ex: 40)" value={novoServicoDuracao} onChange={e=>setNovoServicoDuracao(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
+            <input type="number" placeholder="Duração Base em Minutos (Ex: 40)" value={novoServicoDuracao} onChange={e=>setNovoServicoDuracao(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
             <button type="submit" style={{ padding: '10px', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Serviço</button>
           </form>
           <ul style={{ marginTop: '15px', paddingLeft: '20px' }}>
-            {servicos.map(s => <li key={s.id}>{s.nome} - R$ {s.preco} ({s.duracaoMinutos} min)</li>)}
+            {servicos.map(s => <li key={s.id}>{s.nome} - R$ {s.preco} ({s.duracaoMinutos} min base)</li>)}
           </ul>
         </div>
 
@@ -298,6 +321,25 @@ function TelaPainel() {
           </form>
           <p style={{ fontSize: '12px', color: '#64748b', marginTop: '10px' }}>Usa este formulário quando o cliente já estiver no salão. Ele entra na agenda com o horário atual.</p>
         </div>
+
+        {/* Formulário de Tempo Premium */}
+        <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', border: '2px solid #8b5cf6', boxShadow: '0 4px 10px rgba(139, 92, 246, 0.2)' }}>
+          <h3 style={{ color: '#6d28d9', margin: '0 0 15px 0' }}>⏳ Tempo por Profissional</h3>
+          <form onSubmit={configurarTempoPersonalizado} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <select value={configServicoId} onChange={e=>setConfigServicoId(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
+              <option value="">1. Qual o Serviço?</option>
+              {servicos.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+            </select>
+            <select value={configBarbeiroId} onChange={e=>setConfigBarbeiroId(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
+              <option value="">2. Qual o Profissional?</option>
+              {barbeiros.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
+            </select>
+            <input type="number" placeholder="3. Duração (Minutos)" value={configDuracao} onChange={e=>setConfigDuracao(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
+            <button type="submit" style={{ padding: '10px', backgroundColor: '#8b5cf6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Tempo Específico</button>
+          </form>
+          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '10px' }}>Ex: Defina que o João faz o Degradê em 30 min, mas o Pedro faz em 45 min.</p>
+        </div>
+
       </div>
 
       <h2 className='h2White' style={{ marginTop: '30px' }}>📅 Agenda de Hoje</h2>
