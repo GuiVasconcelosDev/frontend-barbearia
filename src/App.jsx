@@ -46,9 +46,12 @@ function TelaLogin() {
     })
     .then((novaBarbearia) => {
       alert("✅ Conta criada com sucesso! Faça o login para acessar o painel.");
+      setModoCadastro(false);
+      setMensagem("");
     })
     .catch((erro) => {
       alert(`❌ ${erro.message}`);
+      setMensagem("");
     });
     } else {
       fetch(`${API_URL}/api/barbearias/login`, {
@@ -106,9 +109,10 @@ function TelaPainel() {
   const [agendamentos, setAgendamentos] = useState([]);
   const [servicos, setServicos] = useState([]);
   const [barbeiros, setBarbeiros] = useState([]);
-  // Separa quem já cortou de quem ainda vai cortar
-  const agendamentosPendentes = agendamentos.filter(ag => !ag.concluido);
-  const agendamentosConcluidos = agendamentos.filter(ag => ag.concluido);
+  
+  // ATUALIZADO: Ignora quem faltou!
+  const agendamentosPendentes = agendamentos.filter(ag => !ag.concluido && !ag.faltou);
+  const agendamentosConcluidos = agendamentos.filter(ag => ag.concluido && !ag.faltou);
 
   // Soma o preço de todos os serviços concluídos
   const faturamentoTotal = agendamentosConcluidos.reduce((total, ag) => total + (ag.servico.preco || 0), 0);
@@ -118,6 +122,11 @@ function TelaPainel() {
   const [novoServicoPreco, setNovoServicoPreco] = useState('');
   const [novoServicoDuracao, setNovoServicoDuracao] = useState('');
   const [novoBarbeiroNome, setNovoBarbeiroNome] = useState('');
+
+  // Estados para o Encaixe Rápido
+  const [encaixeNome, setEncaixeNome] = useState('');
+  const [encaixeServicoId, setEncaixeServicoId] = useState('');
+  const [encaixeBarbeiroId, setEncaixeBarbeiroId] = useState('');
 
   useEffect(() => {
     const dadosSalvos = localStorage.getItem('barbeariaLogada');
@@ -145,8 +154,19 @@ function TelaPainel() {
         method: 'POST'
       }).then((res) => {
         if(res.ok) {
-          // Atualiza a tela na hora, passando o agendamento para o "cofre"
           setAgendamentos(agendamentos.map(ag => ag.id === id ? { ...ag, concluido: true } : ag));
+        }
+      });
+    }
+  };
+
+  const marcarFalta = (id) => {
+    if(window.confirm("O cliente faltou? A vaga será liberada e não somará no caixa.")) {
+      fetch(`${API_URL}/api/agendamentos/${id}/faltou`, {
+        method: 'POST'
+      }).then((res) => {
+        if(res.ok) {
+          setAgendamentos(agendamentos.map(ag => ag.id === id ? { ...ag, faltou: true } : ag));
         }
       });
     }
@@ -163,7 +183,6 @@ function TelaPainel() {
     }).then(() => {
       alert('Serviço adicionado!');
       setNovoServicoNome(''); setNovoServicoPreco(''); setNovoServicoDuracao('');
-      // Recarrega a lista
       fetch(`${API_URL}/api/servicos/barbearia/${barbearia.id}`).then(r => r.json()).then(setServicos);
     });
   };
@@ -177,15 +196,42 @@ function TelaPainel() {
     }).then(() => {
       alert('Barbeiro adicionado!');
       setNovoBarbeiroNome('');
-      // Recarrega a lista
       fetch(`${API_URL}/api/barbeiros/barbearia/${barbearia.id}`).then(r => r.json()).then(setBarbeiros);
     });
+  };
+
+  // NOVA FUNÇÃO: Adicionar Encaixe Rápido
+  const adicionarEncaixe = (e) => {
+    e.preventDefault();
+    
+    // Pega a hora exata do momento do clique (Ajustando o fuso horário para bater com o local)
+    const agora = new Date();
+    agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
+    const dataHoraAtual = agora.toISOString().slice(0, 16);
+
+    fetch(`${API_URL}/api/agendamentos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        barbearia: { id: barbearia.id },
+        barbeiro: { id: parseInt(encaixeBarbeiroId) },
+        servico: { id: parseInt(encaixeServicoId) },
+        cliente: { nome: encaixeNome, telefone: 'Encaixe Manual' }, // Telefone padrão de encaixe
+        dataHoraInicio: dataHoraAtual
+      })
+    }).then(async res => {
+      if(!res.ok) throw new Error(await res.text());
+      alert('✅ Encaixe realizado com sucesso!');
+      setEncaixeNome(''); setEncaixeServicoId(''); setEncaixeBarbeiroId('');
+      // Recarrega os agendamentos
+      fetch(`${API_URL}/api/agendamentos/barbearia/${barbearia.id}`).then(r => r.json()).then(setAgendamentos);
+    }).catch(err => alert("❌ Erro ao encaixar: " + err.message));
   };
 
   if (!barbearia) return null;
 
   return (
-    <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', fontFamily: 'system-ui' }}>
+    <div style={{ padding: '30px', maxWidth: '1000px', margin: '0 auto', fontFamily: 'system-ui' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #eee', paddingBottom: '15px', marginBottom: '20px' }}>
         <h1>Painel: {barbearia.nome}</h1>
         <div style={{display: 'flex', gap: '10px'}}>
@@ -210,7 +256,7 @@ function TelaPainel() {
       
       <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
         {/* Formulário de Serviços */}
-        <div style={{ flex: '1', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+        <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
           <h3>✂️ Adicionar Serviço</h3>
           <form onSubmit={adicionarServico} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <input type="text" placeholder="Ex: Corte Degradê" value={novoServicoNome} onChange={e=>setNovoServicoNome(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
@@ -224,7 +270,7 @@ function TelaPainel() {
         </div>
 
         {/* Formulário de Barbeiros */}
-        <div style={{ flex: '1', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+        <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
           <h3>💈 Adicionar Profissional</h3>
           <form onSubmit={adicionarBarbeiro} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <input type="text" placeholder="Nome do Barbeiro" value={novoBarbeiroNome} onChange={e=>setNovoBarbeiroNome(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
@@ -233,6 +279,24 @@ function TelaPainel() {
           <ul style={{ marginTop: '15px', paddingLeft: '20px' }}>
             {barbeiros.map(b => <li key={b.id}>{b.nome}</li>)}
           </ul>
+        </div>
+
+        {/* Formulário de Encaixe Rápido */}
+        <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+          <h3>➕ Encaixe Rápido</h3>
+          <form onSubmit={adicionarEncaixe} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <input type="text" placeholder="Nome do Cliente (no salão)" value={encaixeNome} onChange={e=>setEncaixeNome(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
+            <select value={encaixeServicoId} onChange={e=>setEncaixeServicoId(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
+              <option value="">Selecione o Serviço...</option>
+              {servicos.map(s => <option key={s.id} value={s.id}>{s.nome} - R$ {s.preco}</option>)}
+            </select>
+            <select value={encaixeBarbeiroId} onChange={e=>setEncaixeBarbeiroId(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
+              <option value="">Selecione o Profissional...</option>
+              {barbeiros.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
+            </select>
+            <button type="submit" style={{ padding: '10px', backgroundColor: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Adicionar à Agenda</button>
+          </form>
+          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '10px' }}>Usa este formulário quando o cliente já estiver no salão. Ele entra na agenda com o horário atual.</p>
         </div>
       </div>
 
@@ -249,9 +313,17 @@ function TelaPainel() {
                 <span style={{ fontWeight: 'bold', color: '#1d4ed8' }}>
                   {new Date(ag.dataHoraInicio).toLocaleString('pt-BR')}
                 </span>
-                <button onClick={() => concluirAgendamento(ag.id)} style={{ padding: '6px 12px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>
-                  ✅ Concluir
-                </button>
+                
+                {/* ATUALIZADO: Os dois botões lado a lado */}
+                <div style={{ display: 'flex', gap: '5px' }}>
+                  <button onClick={() => marcarFalta(ag.id)} style={{ padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>
+                    ❌ Faltou
+                  </button>
+                  <button onClick={() => concluirAgendamento(ag.id)} style={{ padding: '6px 12px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>
+                    ✅ Concluir
+                  </button>
+                </div>
+
               </div>
             </div>
           ))
@@ -260,6 +332,7 @@ function TelaPainel() {
     </div>
   );
 }
+
 // ==========================================
 // 3. TELA PÚBLICA DO CLIENTE (Rota: /:slug )
 // ==========================================
@@ -435,14 +508,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Rota 1: O link principal abre o Login */}
         <Route path="/" element={<TelaLogin />} />
-        
-        {/* Rota 2: O painel protegido */}
         <Route path="/painel" element={<TelaPainel />} />
-        
-        {/* Rota 3: Link dinâmico do cliente. Ex: /barbearia-do-guilherme */}
-        {/* O :slug avisa o React que qualquer palavra digitada aqui será uma variável */}
         <Route path="/:slug" element={<TelaCliente />} />
       </Routes>
     </Router>
