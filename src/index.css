@@ -72,6 +72,10 @@ h2 {
   font-weight: 500;
 }
 
+.h2White {
+  color: #fff;
+}
+
 h1 {
   font-size: 56px;
   letter-spacing: -1.68px;

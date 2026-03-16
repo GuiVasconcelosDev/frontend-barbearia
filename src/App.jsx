@@ -228,7 +228,7 @@ function TelaPainel() {
         </div>
       </div>
 
-      <h2 style={{ marginTop: '30px' }}>📅 Agenda de Hoje</h2>
+      <h2 className='h2White' style={{ marginTop: '30px' }}>📅 Agenda de Hoje</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {agendamentosPendentes.length === 0 ? <p>Nenhum agendamento pendente.</p> : 
           agendamentosPendentes.map(ag => (
