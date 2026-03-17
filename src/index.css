@@ -114,3 +114,27 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* No seu media query de 600px ou no mobile first */
+.redes-sociais {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center; /* Isso centraliza os links horizontalmente */
+  width: 100%;
+}
+
+footer {
+  width: 100%;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centraliza tudo dentro do footer */
+  text-align: center;
+}
+
+footer p {
+  font-size: 12px;
+  margin-top: 20px;
+  width: 90%; /* Evita que o texto encoste nas bordas em telas muito pequenas */
+}
