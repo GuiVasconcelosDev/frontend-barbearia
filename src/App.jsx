@@ -110,25 +110,20 @@ function TelaPainel() {
   const [servicos, setServicos] = useState([]);
   const [barbeiros, setBarbeiros] = useState([]);
   
-  // ATUALIZADO: Ignora quem faltou!
   const agendamentosPendentes = agendamentos.filter(ag => !ag.concluido && !ag.faltou);
   const agendamentosConcluidos = agendamentos.filter(ag => ag.concluido && !ag.faltou);
 
-  // Soma o preço de todos os serviços concluídos
   const faturamentoTotal = agendamentosConcluidos.reduce((total, ag) => total + (ag.servico.preco || 0), 0);
 
-  // Estados para Novos Cadastros
   const [novoServicoNome, setNovoServicoNome] = useState('');
   const [novoServicoPreco, setNovoServicoPreco] = useState('');
   const [novoServicoDuracao, setNovoServicoDuracao] = useState('');
   const [novoBarbeiroNome, setNovoBarbeiroNome] = useState('');
 
-  // Estados para o Encaixe Rápido
   const [encaixeNome, setEncaixeNome] = useState('');
   const [encaixeServicoId, setEncaixeServicoId] = useState('');
   const [encaixeBarbeiroId, setEncaixeBarbeiroId] = useState('');
   
-  // Estados para Configurar Tempo Premium
   const [configServicoId, setConfigServicoId] = useState('');
   const [configBarbeiroId, setConfigBarbeiroId] = useState('');
   const [configDuracao, setConfigDuracao] = useState('');
@@ -142,7 +137,6 @@ function TelaPainel() {
     const barbeariaLogada = JSON.parse(dadosSalvos);
     setBarbearia(barbeariaLogada);
 
-    // Carregar tudo da barbearia logada
     fetch(`${API_URL}/api/agendamentos/barbearia/${barbeariaLogada.id}`).then(r => r.json()).then(setAgendamentos);
     fetch(`${API_URL}/api/servicos/barbearia/${barbeariaLogada.id}`).then(r => r.json()).then(setServicos);
     fetch(`${API_URL}/api/barbeiros/barbearia/${barbeariaLogada.id}`).then(r => r.json()).then(setBarbeiros);
@@ -205,11 +199,9 @@ function TelaPainel() {
     });
   };
 
-  // NOVA FUNÇÃO: Adicionar Encaixe Rápido
   const adicionarEncaixe = (e) => {
     e.preventDefault();
     
-    // Pega a hora exata do momento do clique (Ajustando o fuso horário para bater com o local)
     const agora = new Date();
     agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
     const dataHoraAtual = agora.toISOString().slice(0, 16);
@@ -221,19 +213,17 @@ function TelaPainel() {
         barbearia: { id: barbearia.id },
         barbeiro: { id: parseInt(encaixeBarbeiroId) },
         servico: { id: parseInt(encaixeServicoId) },
-        cliente: { nome: encaixeNome, telefone: 'Encaixe Manual' }, // Telefone padrão de encaixe
+        cliente: { nome: encaixeNome, telefone: 'Encaixe Manual' },
         dataHoraInicio: dataHoraAtual
       })
     }).then(async res => {
       if(!res.ok) throw new Error(await res.text());
       alert('✅ Encaixe realizado com sucesso!');
       setEncaixeNome(''); setEncaixeServicoId(''); setEncaixeBarbeiroId('');
-      // Recarrega os agendamentos
       fetch(`${API_URL}/api/agendamentos/barbearia/${barbearia.id}`).then(r => r.json()).then(setAgendamentos);
     }).catch(err => alert("❌ Erro ao encaixar: " + err.message));
   };
 
-  // NOVA FUNÇÃO: Salvar o Tempo Personalizado
   const configurarTempoPersonalizado = (e) => {
     e.preventDefault();
     fetch(`${API_URL}/api/barbeiro-servicos`, {
@@ -263,7 +253,6 @@ function TelaPainel() {
         </div>
       </div>
 
-      {/* --- INÍCIO DO DASHBOARD FINANCEIRO --- */}
       <div className="dash-container" style={{ display: 'flex', gap: '20px', marginBottom: '25px', flexWrap: 'wrap' }}>
         <div style={{ flex: '1', minWidth: '200px', backgroundColor: '#10b981', color: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
           <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'normal', opacity: 0.9 }}>💰 Faturamento Total</h3>
@@ -275,10 +264,8 @@ function TelaPainel() {
           <h2 style={{ margin: '10px 0 0 0', fontSize: '36px' }}>{agendamentosConcluidos.length}</h2>
         </div>
       </div>
-      {/* --- FIM DO DASHBOARD FINANCEIRO --- */}
       
       <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-        {/* Formulário de Serviços */}
         <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
           <h3>✂️ Adicionar Serviço</h3>
           <form onSubmit={adicionarServico} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -292,7 +279,6 @@ function TelaPainel() {
           </ul>
         </div>
 
-        {/* Formulário de Barbeiros */}
         <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
           <h3>💈 Adicionar Profissional</h3>
           <form onSubmit={adicionarBarbeiro} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -304,7 +290,6 @@ function TelaPainel() {
           </ul>
         </div>
 
-        {/* Formulário de Encaixe Rápido */}
         <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
           <h3>➕ Encaixe Rápido</h3>
           <form onSubmit={adicionarEncaixe} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -322,7 +307,6 @@ function TelaPainel() {
           <p style={{ fontSize: '12px', color: '#64748b', marginTop: '10px' }}>Usa este formulário quando o cliente já estiver no salão. Ele entra na agenda com o horário atual.</p>
         </div>
 
-        {/* Formulário de Tempo Premium */}
         <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', border: '2px solid #8b5cf6', boxShadow: '0 4px 10px rgba(139, 92, 246, 0.2)' }}>
           <h3 style={{ color: '#6d28d9', margin: '0 0 15px 0' }}>⏳ Tempo por Profissional</h3>
           <form onSubmit={configurarTempoPersonalizado} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -356,7 +340,6 @@ function TelaPainel() {
                   {new Date(ag.dataHoraInicio).toLocaleString('pt-BR')}
                 </span>
                 
-                {/* ATUALIZADO: Os dois botões lado a lado */}
                 <div style={{ display: 'flex', gap: '5px' }}>
                   <button onClick={() => marcarFalta(ag.id)} style={{ padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>
                     ❌ Faltou
@@ -379,14 +362,13 @@ function TelaPainel() {
 // 3. TELA PÚBLICA DO CLIENTE (Rota: /:slug )
 // ==========================================
 function TelaCliente() {
-  const { slug } = useParams(); // Pega o nome da barbearia lá da URL
+  const { slug } = useParams();
   const [barbearia, setBarbearia] = useState(null);
   const [servicos, setServicos] = useState([]);
   const [barbeiros, setBarbeiros] = useState([]);
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
 
-  // Estados do Form
   const [clienteNome, setClienteNome] = useState('');
   const [clienteTelefone, setClienteTelefone] = useState('');
   const [servicoId, setServicoId] = useState('');
@@ -394,7 +376,6 @@ function TelaCliente() {
   const [dataHora, setDataHora] = useState('');
 
   useEffect(() => {
-    // 1. O React pergunta ao Java: "Quem é o dono deste link?"
     fetch(`${API_URL}/api/barbearias/slug/${slug}`)
       .then(res => {
         if (!res.ok) throw new Error("Barbearia não encontrada.");
@@ -402,7 +383,6 @@ function TelaCliente() {
       })
       .then(dadosBarbearia => {
         setBarbearia(dadosBarbearia);
-        // 2. Agora que sabemos quem é, buscamos os barbeiros e serviços dela
         return Promise.all([
           fetch(`${API_URL}/api/servicos/barbearia/${dadosBarbearia.id}`).then(r => r.json()),
           fetch(`${API_URL}/api/barbeiros/barbearia/${dadosBarbearia.id}`).then(r => r.json())
@@ -435,29 +415,18 @@ function TelaCliente() {
       return res.json();
     })
     .then(() => {
-      // Descobre o nome e o PREÇO do serviço
       const servicoEscolhido = servicos.find(s => s.id === parseInt(servicoId));
-      const nomeServico = servicoEscolhido?.nome || "Serviço";
       const precoServico = servicoEscolhido?.preco || 0;
-      const nomeBarbeiro = barbeiros.find(b => b.id === parseInt(barbeiroId))?.nome || "Profissional";
       
-      const dataFormatada = new Date(dataHora).toLocaleString('pt-BR');
-      
-      // 1. Mostra o alerta com a Chave Pix para o cliente copiar
-      alert(`✅ Horário Reservado!\n\nPara confirmar, faça um Pix de R$ ${precoServico} para a chave abaixo:\n\n🔑 ${barbearia.chavePix}\n\nClique em OK para enviar o comprovante no WhatsApp do barbeiro.`);
-
-      // 2. Monta o texto já pedindo o comprovante
-      const textoMsg = `Olá! Acabei de agendar um horário.\n\n*Detalhes:*\n👤 Nome: ${clienteNome}\n✂️ Serviço: ${nomeServico}\n💈 Profissional: ${nomeBarbeiro}\n📅 Data/Hora: ${dataFormatada}\n💰 Valor: R$ ${precoServico}\n\n*Segue abaixo o meu comprovante do Pix:*`;
-      
-      const numeroWhats = barbearia.telefone.replace(/\D/g, ''); 
-      const linkWhats = `https://wa.me/55${numeroWhats}?text=${encodeURIComponent(textoMsg)}`;
-      
-      window.open(linkWhats, '_blank');
+      // ALERTA LIMPO E SEM REDIRECIONAMENTO!
+      alert(`✅ Horário Reservado com sucesso!\n\nSeu agendamento foi salvo na agenda do profissional.\nPara pagamento antecipado, a chave Pix é: ${barbearia.chavePix}\n\nEm breve você receberá notificações automáticas no seu WhatsApp!`);
 
       setMensagem("");
       setClienteNome(''); 
       setClienteTelefone(''); 
       setDataHora('');
+      setServicoId('');
+      setBarbeiroId('');
     })
     .catch(err => setMensagem("❌ " + err.message));
   };
@@ -478,13 +447,11 @@ function TelaCliente() {
 
         <form onSubmit={agendar} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          {/* Dados do Cliente */}
           <div style={{ display: 'flex', gap: '10px' }}>
             <input type="text" placeholder="Seu Nome" value={clienteNome} onChange={e=>setClienteNome(e.target.value)} required style={{ flex: 1, padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px' }} />
             <input type="tel" placeholder="Seu WhatsApp" value={clienteTelefone} onChange={e=>setClienteTelefone(e.target.value)} required style={{ flex: 1, padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px' }} />
           </div>
           
-          {/* CARDS DE SERVIÇOS */}
           <div>
             <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>1. Escolha o Serviço:</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
@@ -503,11 +470,9 @@ function TelaCliente() {
                 </div>
               ))}
             </div>
-            {/* Input invisível só para forçar o preenchimento obrigatório */}
             <input type="text" value={servicoId} readOnly required style={{ width: 0, height: 0, border: 'none', padding: 0, margin: 0, opacity: 0 }} />
           </div>
 
-          {/* CARDS DE BARBEIROS */}
           <div>
             <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>2. Escolha o Profissional:</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
@@ -528,7 +493,6 @@ function TelaCliente() {
             <input type="text" value={barbeiroId} readOnly required style={{ width: 0, height: 0, border: 'none', padding: 0, margin: 0, opacity: 0 }} />
           </div>
 
-          {/* Data e Hora */}
           <div>
             <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>3. Escolha a Data e Hora:</label>
             <input type="datetime-local" value={dataHora} onChange={e=>setDataHora(e.target.value)} required style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px', boxSizing: 'border-box' }} />
