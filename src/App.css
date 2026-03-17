@@ -34,36 +34,73 @@
    ========================================= */
 
 .footer-container {
-    margin-top: 40px;
-    padding: 30px 10px;
+    margin-top: 60px;
+    padding: 40px 20px;
     text-align: center;
-    border-top: 1px solid #e2e8f0;
+    /* Usando a borda que você já tem no projeto */
+    border-top: 1px solid var(--border);
+    background-color: var(--bg); 
     width: 100%;
-    box-sizing: border-box;
 }
 
 .redes-sociais {
     display: flex;
     justify-content: center;
-    gap: 30px;
-    margin-bottom: 20px;
+    gap: 40px;
+    margin-bottom: 25px;
 }
 
 .redes-sociais a {
-    color: #64748b;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 14px;
-    transition: color 0.2s;
+    color: var(--text); /* Cor suave definida no seu index.css */
+    text-decoration: none; /* Tira o sublinhado azul feio */
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
+/* Efeito de hover elegante */
 .redes-sociais a:hover {
-    color: #3b82f6;
+    color: var(--accent); /* Roxo que você definiu */
+    transform: translateY(-2px); /* Sobe um pouquinho */
+}
+
+/* Linha que aparece embaixo no hover */
+.redes-sociais a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -5px;
+    left: 0;
+    background-color: var(--accent);
+    transition: width 0.3s ease;
+}
+
+.redes-sociais a:hover::after {
+    width: 100%;
 }
 
 .footer-copy {
-    font-size: 12px;
-    color: #94a3b8;
+    font-size: 13px;
+    color: var(--text);
+    opacity: 0.6;
+    margin-top: 20px;
+}
+
+/* RESPONSIVIDADE PARA O CELULAR */
+@media (max-width: 600px) {
+    .redes-sociais {
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+    }
+    
+    .footer-container {
+        padding: 40px 10px;
+        background-color: transparent; /* Fica mais limpo no mobile */
+    }
 }
 
 /* RESPONSIVIDADE MOBILE */
