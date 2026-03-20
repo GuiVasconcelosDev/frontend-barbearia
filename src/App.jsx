@@ -4,6 +4,9 @@ import './App.css';
 
 const API_URL = 'https://barbearia-saas-api-production.up.railway.app';
 
+// Função auxiliar para pegar o token
+const getToken = () => localStorage.getItem('tokenSaaS');
+
 // ==========================================
 // 1. TELA DE LOGIN E CADASTRO (Rota: / )
 // ==========================================
@@ -12,15 +15,13 @@ function TelaLogin() {
   const [modoCadastro, setModoCadastro] = useState(false);
   const [mensagem, setMensagem] = useState("");
 
-  // Campos
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [chavePix, setChavePix] = useState('');
-  const [endereco, setEndereco] = useState(''); // <-- 1. NOVO ESTADO ADICIONADO
+  const [endereco, setEndereco] = useState(''); 
 
-  
   useEffect(() => {
     if (localStorage.getItem('barbeariaLogada')) navigate('/painel');
   }, [navigate]);
@@ -33,10 +34,7 @@ function TelaLogin() {
       const slug = nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ /g, '-');
       fetch(`${API_URL}/api/barbearias`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      // <-- 2. ENDEREÇO INCLUÍDO NO ENVIO PARA O JAVA
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome, slug, telefone, email, senha, chavePix, endereco }) 
     })
     .then(async (res) => {
@@ -46,7 +44,7 @@ function TelaLogin() {
       }
       return res.json(); 
     })
-    .then((novaBarbearia) => {
+    .then(() => {
       alert("✅ Conta criada com sucesso! Faça o login para acessar o painel.");
       setModoCadastro(false);
       setMensagem("");
@@ -63,7 +61,9 @@ function TelaLogin() {
       })
       .then(res => res.ok ? res.json() : Promise.reject("Credenciais inválidas."))
       .then(dados => {
-        localStorage.setItem('barbeariaLogada', JSON.stringify(dados));
+        // --- 🔒 GUARDA O CRACHÁ AQUI ---
+        localStorage.setItem('barbeariaLogada', JSON.stringify(dados.barbearia));
+        localStorage.setItem('tokenSaaS', dados.token); 
         navigate('/painel');
       })
       .catch(err => setMensagem("❌ " + err));
@@ -83,8 +83,6 @@ function TelaLogin() {
               <input type="text" placeholder="Nome da Barbearia" value={nome} onChange={e=>setNome(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
               <input type="text" placeholder="Telefone" value={telefone} onChange={e=>setTelefone(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
               <input type="text" placeholder="Sua Chave Pix (CPF/Email/Celular)" value={chavePix} onChange={e=>setChavePix(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
-              
-              {/* <-- 3. NOVO CAMPO DE ENDEREÇO AQUI */}
               <input type="text" placeholder="Endereço (Rua, Número, Bairro, Cidade)" value={endereco} onChange={e=>setEndereco(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
             </>
           )}
@@ -109,265 +107,259 @@ function TelaLogin() {
 // 2. TELA DO PAINEL ADMIN (Rota: /painel )
 // ==========================================
 function TelaPainel() {
-  const navigate = useNavigate();
-  const [barbearia, setBarbearia] = useState(null);
-  const [agendamentos, setAgendamentos] = useState([]);
-  const [servicos, setServicos] = useState([]);
-  const [barbeiros, setBarbeiros] = useState([]);
-  
-  const agendamentosPendentes = agendamentos.filter(ag => !ag.concluido && !ag.faltou);
-  const agendamentosConcluidos = agendamentos.filter(ag => ag.concluido && !ag.faltou);
+  const navigate = useNavigate();
+  const [barbearia, setBarbearia] = useState(null);
+  const [agendamentos, setAgendamentos] = useState([]);
+  const [servicos, setServicos] = useState([]);
+  const [barbeiros, setBarbeiros] = useState([]);
+  
+  const agendamentosPendentes = agendamentos.filter(ag => !ag.concluido && !ag.faltou);
+  const agendamentosConcluidos = agendamentos.filter(ag => ag.concluido && !ag.faltou);
 
-  const faturamentoTotal = agendamentosConcluidos.reduce((total, ag) => total + (ag.servico.preco || 0), 0);
+  const faturamentoTotal = agendamentosConcluidos.reduce((total, ag) => total + (ag.servico.preco || 0), 0);
 
-  const [novoServicoNome, setNovoServicoNome] = useState('');
-  const [novoServicoPreco, setNovoServicoPreco] = useState('');
-  const [novoServicoDuracao, setNovoServicoDuracao] = useState('');
-  const [novoBarbeiroNome, setNovoBarbeiroNome] = useState('');
+  const [novoServicoNome, setNovoServicoNome] = useState('');
+  const [novoServicoPreco, setNovoServicoPreco] = useState('');
+  const [novoServicoDuracao, setNovoServicoDuracao] = useState('');
+  const [novoBarbeiroNome, setNovoBarbeiroNome] = useState('');
 
-  const [encaixeNome, setEncaixeNome] = useState('');
-  const [encaixeServicoId, setEncaixeServicoId] = useState('');
-  const [encaixeBarbeiroId, setEncaixeBarbeiroId] = useState('');
-  
-  const [configServicoId, setConfigServicoId] = useState('');
-  const [configBarbeiroId, setConfigBarbeiroId] = useState('');
-  const [configDuracao, setConfigDuracao] = useState('');
+  const [encaixeNome, setEncaixeNome] = useState('');
+  const [encaixeServicoId, setEncaixeServicoId] = useState('');
+  const [encaixeBarbeiroId, setEncaixeBarbeiroId] = useState('');
+  
+  const [configServicoId, setConfigServicoId] = useState('');
+  const [configBarbeiroId, setConfigBarbeiroId] = useState('');
+  const [configDuracao, setConfigDuracao] = useState('');
 
-  useEffect(() => {
-    const dadosSalvos = localStorage.getItem('barbeariaLogada');
-    if (!dadosSalvos) {
-      navigate('/'); 
-      return;
-    }
-    const barbeariaLogada = JSON.parse(dadosSalvos);
-    setBarbearia(barbeariaLogada);
+  useEffect(() => {
+    const dadosSalvos = localStorage.getItem('barbeariaLogada');
+    if (!dadosSalvos) {
+      navigate('/'); 
+      return;
+    }
+    const barbeariaLogada = JSON.parse(dadosSalvos);
+    setBarbearia(barbeariaLogada);
 
-    fetch(`${API_URL}/api/agendamentos/barbearia/${barbeariaLogada.id}`).then(r => r.json()).then(setAgendamentos);
-    fetch(`${API_URL}/api/servicos/barbearia/${barbeariaLogada.id}`).then(r => r.json()).then(setServicos);
-    fetch(`${API_URL}/api/barbeiros/barbearia/${barbeariaLogada.id}`).then(r => r.json()).then(setBarbeiros);
-  }, [navigate]);
+    // --- 🔒 ENVIANDO O CRACHÁ NAS BUSCAS ---
+    fetch(`${API_URL}/api/agendamentos/barbearia/${barbeariaLogada.id}`, { headers: { 'Authorization': `Bearer ${getToken()}` } }).then(r => r.json()).then(setAgendamentos);
+    fetch(`${API_URL}/api/servicos/barbearia/${barbeariaLogada.id}`, { headers: { 'Authorization': `Bearer ${getToken()}` } }).then(r => r.json()).then(setServicos);
+    fetch(`${API_URL}/api/barbeiros/barbearia/${barbeariaLogada.id}`, { headers: { 'Authorization': `Bearer ${getToken()}` } }).then(r => r.json()).then(setBarbeiros);
+  }, [navigate]);
 
-  const sair = () => {
-    localStorage.removeItem('barbeariaLogada');
-    navigate('/');
-  };
+  const sair = () => {
+    localStorage.removeItem('barbeariaLogada');
+    localStorage.removeItem('tokenSaaS');
+    navigate('/');
+  };
 
-  const concluirAgendamento = (id) => {
-    if(window.confirm("Confirmar a conclusão e adicionar o valor ao caixa?")) {
-      fetch(`${API_URL}/api/agendamentos/${id}/concluir`, {
-        method: 'POST'
-      }).then((res) => {
-        if(res.ok) {
-          setAgendamentos(agendamentos.map(ag => ag.id === id ? { ...ag, concluido: true } : ag));
-        }
-      });
-    }
-  };
+  const concluirAgendamento = (id) => {
+    if(window.confirm("Confirmar a conclusão e adicionar o valor ao caixa?")) {
+      fetch(`${API_URL}/api/agendamentos/${id}/concluir`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${getToken()}` } // 🔒
+      }).then((res) => {
+        if(res.ok) setAgendamentos(agendamentos.map(ag => ag.id === id ? { ...ag, concluido: true } : ag));
+      });
+    }
+  };
 
-  const marcarFalta = (id) => {
-    if(window.confirm("O cliente faltou? A vaga será liberada e não somará no caixa.")) {
-      fetch(`${API_URL}/api/agendamentos/${id}/faltou`, {
-        method: 'POST'
-      }).then((res) => {
-        if(res.ok) {
-          setAgendamentos(agendamentos.map(ag => ag.id === id ? { ...ag, faltou: true } : ag));
-        }
-      });
-    }
-  };
+  const marcarFalta = (id) => {
+    if(window.confirm("O cliente faltou? A vaga será liberada e não somará no caixa.")) {
+      fetch(`${API_URL}/api/agendamentos/${id}/faltou`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${getToken()}` } // 🔒
+      }).then((res) => {
+        if(res.ok) setAgendamentos(agendamentos.map(ag => ag.id === id ? { ...ag, faltou: true } : ag));
+      });
+    }
+  };
 
-  const adicionarServico = (e) => {
-    e.preventDefault();
-    fetch(`${API_URL}/api/servicos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nome: novoServicoNome, preco: novoServicoPreco, duracaoMinutos: novoServicoDuracao, barbearia: { id: barbearia.id }
-      })
-    }).then(() => {
-      alert('Serviço adicionado!');
-      setNovoServicoNome(''); setNovoServicoPreco(''); setNovoServicoDuracao('');
-      fetch(`${API_URL}/api/servicos/barbearia/${barbearia.id}`).then(r => r.json()).then(setServicos);
-    });
-  };
+  const adicionarServico = (e) => {
+    e.preventDefault();
+    fetch(`${API_URL}/api/servicos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` }, // 🔒
+      body: JSON.stringify({ nome: novoServicoNome, preco: novoServicoPreco, duracaoMinutos: novoServicoDuracao, barbearia: { id: barbearia.id } })
+    }).then(() => {
+      alert('Serviço adicionado!');
+      setNovoServicoNome(''); setNovoServicoPreco(''); setNovoServicoDuracao('');
+      fetch(`${API_URL}/api/servicos/barbearia/${barbearia.id}`, { headers: { 'Authorization': `Bearer ${getToken()}` } }).then(r => r.json()).then(setServicos);
+    });
+  };
 
-  const adicionarBarbeiro = (e) => {
-    e.preventDefault();
-    fetch(`${API_URL}/api/barbeiros`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome: novoBarbeiroNome, ativo: true, barbearia: { id: barbearia.id } })
-    }).then(() => {
-      alert('Barbeiro adicionado!');
-      setNovoBarbeiroNome('');
-      fetch(`${API_URL}/api/barbeiros/barbearia/${barbearia.id}`).then(r => r.json()).then(setBarbeiros);
-    });
-  };
+  const adicionarBarbeiro = (e) => {
+    e.preventDefault();
+    fetch(`${API_URL}/api/barbeiros`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` }, // 🔒
+      body: JSON.stringify({ nome: novoBarbeiroNome, ativo: true, barbearia: { id: barbearia.id } })
+    }).then(() => {
+      alert('Barbeiro adicionado!');
+      setNovoBarbeiroNome('');
+      fetch(`${API_URL}/api/barbeiros/barbearia/${barbearia.id}`, { headers: { 'Authorization': `Bearer ${getToken()}` } }).then(r => r.json()).then(setBarbeiros);
+    });
+  };
 
-  const adicionarEncaixe = (e) => {
-    e.preventDefault();
-    
-    const agora = new Date();
-    agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
-    const dataHoraAtual = agora.toISOString().slice(0, 16);
+  const adicionarEncaixe = (e) => {
+    e.preventDefault();
+    const agora = new Date();
+    agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
+    const dataHoraAtual = agora.toISOString().slice(0, 16);
 
-    fetch(`${API_URL}/api/agendamentos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        barbearia: { id: barbearia.id },
-        barbeiro: { id: parseInt(encaixeBarbeiroId) },
-        servico: { id: parseInt(encaixeServicoId) },
-        cliente: { nome: encaixeNome, telefone: 'Encaixe Manual' },
-        dataHoraInicio: dataHoraAtual
-      })
-    }).then(async res => {
-      if(!res.ok) throw new Error(await res.text());
-      alert('✅ Encaixe realizado com sucesso!');
-      setEncaixeNome(''); setEncaixeServicoId(''); setEncaixeBarbeiroId('');
-      fetch(`${API_URL}/api/agendamentos/barbearia/${barbearia.id}`).then(r => r.json()).then(setAgendamentos);
-    }).catch(err => alert("❌ Erro ao encaixar: " + err.message));
-  };
+    fetch(`${API_URL}/api/agendamentos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` }, // 🔒
+      body: JSON.stringify({
+        barbearia: { id: barbearia.id },
+        barbeiro: { id: parseInt(encaixeBarbeiroId) },
+        servico: { id: parseInt(encaixeServicoId) },
+        cliente: { nome: encaixeNome, telefone: 'Encaixe Manual' },
+        dataHoraInicio: dataHoraAtual
+      })
+    }).then(async res => {
+      if(!res.ok) throw new Error(await res.text());
+      alert('✅ Encaixe realizado com sucesso!');
+      setEncaixeNome(''); setEncaixeServicoId(''); setEncaixeBarbeiroId('');
+      fetch(`${API_URL}/api/agendamentos/barbearia/${barbearia.id}`, { headers: { 'Authorization': `Bearer ${getToken()}` } }).then(r => r.json()).then(setAgendamentos);
+    }).catch(err => alert("❌ Erro ao encaixar: " + err.message));
+  };
 
-  const configurarTempoPersonalizado = (e) => {
-    e.preventDefault();
-    fetch(`${API_URL}/api/barbeiro-servicos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        barbeiro: { id: parseInt(configBarbeiroId) },
-        servico: { id: parseInt(configServicoId) },
-        duracaoMinutos: parseInt(configDuracao)
-      })
-    }).then(async res => {
-      if(!res.ok) throw new Error("Erro ao salvar o tempo.");
-      alert('✅ Tempo personalizado configurado com sucesso!');
-      setConfigDuracao('');
-    }).catch(err => alert("❌ " + err.message));
-  };
+  const configurarTempoPersonalizado = (e) => {
+    e.preventDefault();
+    fetch(`${API_URL}/api/barbeiro-servicos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` }, // 🔒
+      body: JSON.stringify({
+        barbeiro: { id: parseInt(configBarbeiroId) },
+        servico: { id: parseInt(configServicoId) },
+        duracaoMinutos: parseInt(configDuracao)
+      })
+    }).then(async res => {
+      if(!res.ok) throw new Error("Erro ao salvar o tempo.");
+      alert('✅ Tempo personalizado configurado com sucesso!');
+      setConfigDuracao('');
+    }).catch(err => alert("❌ " + err.message));
+  };
 
-  if (!barbearia) return null;
+  if (!barbearia) return null;
 
-  return (
-    <div style={{ padding: '30px', maxWidth: '1000px', margin: '0 auto', fontFamily: 'system-ui' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #eee', paddingBottom: '15px', marginBottom: '20px' }}>
-        <h1>Painel: {barbearia.nome}</h1>
-        <div style={{display: 'flex', gap: '10px'}}>
-          <Link to={`/${barbearia.slug}`} target="_blank" style={{ padding: '10px 15px', backgroundColor: '#8b5cf6', color: 'white', textDecoration: 'none', borderRadius: '6px', fontWeight: 'bold' }}>🌍 Ver Meu Site</Link>
-          <button onClick={sair} style={{ padding: '10px 15px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Sair</button>
-        </div>
-      </div>
+  return (
+    <div style={{ padding: '30px', maxWidth: '1000px', margin: '0 auto', fontFamily: 'system-ui' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #eee', paddingBottom: '15px', marginBottom: '20px' }}>
+        <h1>Painel: {barbearia.nome}</h1>
+        <div style={{display: 'flex', gap: '10px'}}>
+          <Link to={`/${barbearia.slug}`} target="_blank" style={{ padding: '10px 15px', backgroundColor: '#8b5cf6', color: 'white', textDecoration: 'none', borderRadius: '6px', fontWeight: 'bold' }}>🌍 Ver Meu Site</Link>
+          <button onClick={sair} style={{ padding: '10px 15px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Sair</button>
+        </div>
+      </div>
 
-      <div className="dash-container" style={{ display: 'flex', gap: '20px', marginBottom: '25px', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1', minWidth: '200px', backgroundColor: '#10b981', color: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'normal', opacity: 0.9 }}>💰 Faturamento Total</h3>
-          <h2 style={{ margin: '10px 0 0 0', fontSize: '36px' }}>R$ {faturamentoTotal.toFixed(2)}</h2>
-        </div>
-        
-        <div style={{ flex: '1', minWidth: '200px', backgroundColor: '#3b82f6', color: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'normal', opacity: 0.9 }}>✂️ Cortes Concluídos</h3>
-          <h2 style={{ margin: '10px 0 0 0', fontSize: '36px' }}>{agendamentosConcluidos.length}</h2>
-        </div>
-      </div>
-      
-      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-          <h3>✂️ Adicionar Serviço</h3>
-          <form onSubmit={adicionarServico} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <input type="text" placeholder="Ex: Corte Degradê" value={novoServicoNome} onChange={e=>setNovoServicoNome(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
-            <input type="number" placeholder="Preço (Ex: 35)" value={novoServicoPreco} onChange={e=>setNovoServicoPreco(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
-            <input type="number" placeholder="Duração Base em Minutos (Ex: 40)" value={novoServicoDuracao} onChange={e=>setNovoServicoDuracao(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
-            <button type="submit" style={{ padding: '10px', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Serviço</button>
-          </form>
-          <ul style={{ marginTop: '15px', paddingLeft: '20px' }}>
-            {servicos.map(s => <li key={s.id}>{s.nome} - R$ {s.preco} ({s.duracaoMinutos} min base)</li>)}
-          </ul>
-        </div>
+      <div className="dash-container" style={{ display: 'flex', gap: '20px', marginBottom: '25px', flexWrap: 'wrap' }}>
+        <div style={{ flex: '1', minWidth: '200px', backgroundColor: '#10b981', color: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'normal', opacity: 0.9 }}>💰 Faturamento Total</h3>
+          <h2 style={{ margin: '10px 0 0 0', fontSize: '36px' }}>R$ {faturamentoTotal.toFixed(2)}</h2>
+        </div>
+        
+        <div style={{ flex: '1', minWidth: '200px', backgroundColor: '#3b82f6', color: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'normal', opacity: 0.9 }}>✂️ Cortes Concluídos</h3>
+          <h2 style={{ margin: '10px 0 0 0', fontSize: '36px' }}>{agendamentosConcluidos.length}</h2>
+        </div>
+      </div>
+      
+      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+        <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+          <h3>✂️ Adicionar Serviço</h3>
+          <form onSubmit={adicionarServico} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <input type="text" placeholder="Ex: Corte Degradê" value={novoServicoNome} onChange={e=>setNovoServicoNome(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
+            <input type="number" placeholder="Preço (Ex: 35)" value={novoServicoPreco} onChange={e=>setNovoServicoPreco(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
+            <input type="number" placeholder="Duração Base em Minutos (Ex: 40)" value={novoServicoDuracao} onChange={e=>setNovoServicoDuracao(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
+            <button type="submit" style={{ padding: '10px', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Serviço</button>
+          </form>
+          <ul style={{ marginTop: '15px', paddingLeft: '20px' }}>
+            {servicos.map(s => <li key={s.id}>{s.nome} - R$ {s.preco} ({s.duracaoMinutos} min base)</li>)}
+          </ul>
+        </div>
 
-        <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-          <h3>💈 Adicionar Profissional</h3>
-          <form onSubmit={adicionarBarbeiro} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <input type="text" placeholder="Nome do Barbeiro" value={novoBarbeiroNome} onChange={e=>setNovoBarbeiroNome(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
-            <button type="submit" style={{ padding: '10px', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Barbeiro</button>
-          </form>
-          <ul style={{ marginTop: '15px', paddingLeft: '20px' }}>
-            {barbeiros.map(b => <li key={b.id}>{b.nome}</li>)}
-          </ul>
-        </div>
+        <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+          <h3>💈 Adicionar Profissional</h3>
+          <form onSubmit={adicionarBarbeiro} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <input type="text" placeholder="Nome do Barbeiro" value={novoBarbeiroNome} onChange={e=>setNovoBarbeiroNome(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
+            <button type="submit" style={{ padding: '10px', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Barbeiro</button>
+          </form>
+          <ul style={{ marginTop: '15px', paddingLeft: '20px' }}>
+            {barbeiros.map(b => <li key={b.id}>{b.nome}</li>)}
+          </ul>
+        </div>
 
-        <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-          <h3>➕ Encaixe Rápido</h3>
-          <form onSubmit={adicionarEncaixe} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <input type="text" placeholder="Nome do Cliente (no salão)" value={encaixeNome} onChange={e=>setEncaixeNome(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
-            <select value={encaixeServicoId} onChange={e=>setEncaixeServicoId(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
-              <option value="">Selecione o Serviço...</option>
-              {servicos.map(s => <option key={s.id} value={s.id}>{s.nome} - R$ {s.preco}</option>)}
-            </select>
-            <select value={encaixeBarbeiroId} onChange={e=>setEncaixeBarbeiroId(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
-              <option value="">Selecione o Profissional...</option>
-              {barbeiros.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
-            </select>
-            <button type="submit" style={{ padding: '10px', backgroundColor: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Adicionar à Agenda</button>
-          </form>
-          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '10px' }}>Usa este formulário quando o cliente já estiver no salão. Ele entra na agenda com o horário atual.</p>
-        </div>
+        <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+          <h3>➕ Encaixe Rápido</h3>
+          <form onSubmit={adicionarEncaixe} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <input type="text" placeholder="Nome do Cliente (no salão)" value={encaixeNome} onChange={e=>setEncaixeNome(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
+            <select value={encaixeServicoId} onChange={e=>setEncaixeServicoId(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
+              <option value="">Selecione o Serviço...</option>
+              {servicos.map(s => <option key={s.id} value={s.id}>{s.nome} - R$ {s.preco}</option>)}
+            </select>
+            <select value={encaixeBarbeiroId} onChange={e=>setEncaixeBarbeiroId(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
+              <option value="">Selecione o Profissional...</option>
+              {barbeiros.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
+            </select>
+            <button type="submit" style={{ padding: '10px', backgroundColor: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Adicionar à Agenda</button>
+          </form>
+          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '10px' }}>Usa este formulário quando o cliente já estiver no salão. Ele entra na agenda com o horário atual.</p>
+        </div>
 
-        <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', border: '2px solid #8b5cf6', boxShadow: '0 4px 10px rgba(139, 92, 246, 0.2)' }}>
-          <h3 style={{ color: '#6d28d9', margin: '0 0 15px 0' }}>⏳ Tempo por Profissional</h3>
-          <form onSubmit={configurarTempoPersonalizado} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <select value={configServicoId} onChange={e=>setConfigServicoId(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
-              <option value="">1. Qual o Serviço?</option>
-              {servicos.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
-            </select>
-            <select value={configBarbeiroId} onChange={e=>setConfigBarbeiroId(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
-              <option value="">2. Qual o Profissional?</option>
-              {barbeiros.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
-            </select>
-            <input type="number" placeholder="3. Duração (Minutos)" value={configDuracao} onChange={e=>setConfigDuracao(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
-            <button type="submit" style={{ padding: '10px', backgroundColor: '#8b5cf6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Tempo Específico</button>
-          </form>
-          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '10px' }}>Ex: Defina que o João faz o Degradê em 30 min, mas o Pedro faz em 45 min.</p>
-        </div>
+        <div style={{ flex: '1', minWidth: '250px', backgroundColor: '#fff', padding: '20px', borderRadius: '8px', border: '2px solid #8b5cf6', boxShadow: '0 4px 10px rgba(139, 92, 246, 0.2)' }}>
+          <h3 style={{ color: '#6d28d9', margin: '0 0 15px 0' }}>⏳ Tempo por Profissional</h3>
+          <form onSubmit={configurarTempoPersonalizado} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <select value={configServicoId} onChange={e=>setConfigServicoId(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
+              <option value="">1. Qual o Serviço?</option>
+              {servicos.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+            </select>
+            <select value={configBarbeiroId} onChange={e=>setConfigBarbeiroId(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
+              <option value="">2. Qual o Profissional?</option>
+              {barbeiros.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
+            </select>
+            <input type="number" placeholder="3. Duração (Minutos)" value={configDuracao} onChange={e=>setConfigDuracao(e.target.value)} required style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}/>
+            <button type="submit" style={{ padding: '10px', backgroundColor: '#8b5cf6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar Tempo Específico</button>
+          </form>
+          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '10px' }}>Ex: Defina que o João faz o Degradê em 30 min, mas o Pedro faz em 45 min.</p>
+        </div>
 
-      </div>
+      </div>
 
-      <h2 className='h2White' style={{ marginTop: '30px' }}>📅 Agenda de Hoje</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {agendamentosPendentes.length === 0 ? <p>Nenhum agendamento pendente.</p> : 
-          agendamentosPendentes.map(ag => (
-            <div key={ag.id} className="agendamento-card" style={{ padding: '15px', backgroundColor: '#f8fafc', borderLeft: '4px solid #3b82f6', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <strong>{ag.cliente.nome}</strong> - 📱 {ag.cliente.telefone} <br/>
-                ✂️ {ag.servico.nome} com {ag.barbeiro.nome}
-              </div>
-              <div className="agendamento-acoes" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                <span style={{ fontWeight: 'bold', color: '#1d4ed8' }}>
-                  {new Date(ag.dataHoraInicio).toLocaleString('pt-BR')}
-                </span>
-                
-                <div style={{ display: 'flex', gap: '5px' }}>
-                  <button onClick={() => marcarFalta(ag.id)} style={{ padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>
-                    ❌ Faltou
-                  </button>
-                  <button onClick={() => concluirAgendamento(ag.id)} style={{ padding: '6px 12px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>
-                    ✅ Concluir
-                  </button>
-                </div>
+      <h2 className='h2White' style={{ marginTop: '30px' }}>📅 Agenda de Hoje</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {agendamentosPendentes.length === 0 ? <p>Nenhum agendamento pendente.</p> : 
+          agendamentosPendentes.map(ag => (
+            <div key={ag.id} className="agendamento-card" style={{ padding: '15px', backgroundColor: '#f8fafc', borderLeft: '4px solid #3b82f6', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong>{ag.cliente.nome}</strong> - 📱 {ag.cliente.telefone} <br/>
+                ✂️ {ag.servico.nome} com {ag.barbeiro.nome}
+              </div>
+              <div className="agendamento-acoes" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                <span style={{ fontWeight: 'bold', color: '#1d4ed8' }}>
+                  {new Date(ag.dataHoraInicio).toLocaleString('pt-BR')}
+                </span>
+                
+                <div style={{ display: 'flex', gap: '5px' }}>
+                  <button onClick={() => marcarFalta(ag.id)} style={{ padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>
+                    ❌ Faltou
+                  </button>
+                  <button onClick={() => concluirAgendamento(ag.id)} style={{ padding: '6px 12px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>
+                    ✅ Concluir
+                  </button>
+                </div>
 
-              </div>
-            </div>
-          ))
-        }
-      </div>
-    </div>
-  );
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  );
 }
 
 // ==========================================
 // 3. TELA PÚBLICA DO CLIENTE (Rota: /:slug )
-// ==========================================
-// ==========================================
-// TELA DO CLIENTE (Rota: /agendar/:slug )
 // ==========================================
 function TelaCliente() {
   const { slug } = useParams();
@@ -423,18 +415,9 @@ function TelaCliente() {
       return res.json();
     })
     .then(() => {
-      const servicoEscolhido = servicos.find(s => s.id === parseInt(servicoId));
-      const precoServico = servicoEscolhido?.preco || 0;
-      
-      // ALERTA LIMPO E SEM REDIRECIONAMENTO!
       alert(`✅ Horário Reservado com sucesso!\n\nSeu agendamento foi salvo na agenda do profissional.\nPara pagamento antecipado, a chave Pix é: ${barbearia.chavePix}\n\nEm breve você receberá notificações automáticas no seu WhatsApp!`);
-
       setMensagem("");
-      setClienteNome(''); 
-      setClienteTelefone(''); 
-      setDataHora('');
-      setServicoId('');
-      setBarbeiroId('');
+      setClienteNome(''); setClienteTelefone(''); setDataHora(''); setServicoId(''); setBarbeiroId('');
     })
     .catch(err => setMensagem("❌ " + err.message));
   };
@@ -446,15 +429,9 @@ function TelaCliente() {
     <div style={{ padding: '30px', maxWidth: '600px', margin: '0 auto', fontFamily: 'system-ui' }}>
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
         <h1 style={{ fontSize: '32px', color: '#1e293b', marginBottom: '10px' }}>✂️ {barbearia.nome}</h1>
-        
-        {/* === NOVO BLOCO DO ENDEREÇO === */}
         <div style={{ backgroundColor: '#f1f5f9', padding: '10px 20px', borderRadius: '8px', display: 'inline-block', marginBottom: '10px' }}>
-          <p style={{ color: '#475569', margin: 0, fontSize: '15px' }}>
-            📍 <strong>Endereço:</strong> {barbearia.endereco || "Endereço não informado"}
-          </p>
+          <p style={{ color: '#475569', margin: 0, fontSize: '15px' }}>📍 <strong>Endereço:</strong> {barbearia.endereco || "Endereço não informado"}</p>
         </div>
-        {/* =============================== */}
-
         <p style={{ color: '#64748b', margin: 0 }}>📞 {barbearia.telefone}</p>
       </div>
 
@@ -463,7 +440,6 @@ function TelaCliente() {
         <p style={{ color: '#dc2626', fontWeight: 'bold', textAlign: 'center' }}>{mensagem}</p>
 
         <form onSubmit={agendar} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
           <div style={{ display: 'flex', gap: '10px' }}>
             <input type="text" placeholder="Seu Nome" value={clienteNome} onChange={e=>setClienteNome(e.target.value)} required style={{ flex: 1, padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px' }} />
             <input type="tel" placeholder="Seu WhatsApp" value={clienteTelefone} onChange={e=>setClienteTelefone(e.target.value)} required style={{ flex: 1, padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px' }} />
@@ -473,15 +449,7 @@ function TelaCliente() {
             <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>1. Escolha o Serviço:</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
               {servicos.map(s => (
-                <div 
-                  key={s.id} 
-                  onClick={() => setServicoId(s.id)}
-                  style={{ 
-                    padding: '15px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
-                    border: parseInt(servicoId) === s.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-                    backgroundColor: parseInt(servicoId) === s.id ? '#eff6ff' : '#fff'
-                  }}
-                >
+                <div key={s.id} onClick={() => setServicoId(s.id)} style={{ padding: '15px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', border: parseInt(servicoId) === s.id ? '2px solid #3b82f6' : '1px solid #e2e8f0', backgroundColor: parseInt(servicoId) === s.id ? '#eff6ff' : '#fff' }}>
                   <div style={{ fontWeight: 'bold', color: '#1e293b', fontSize: '16px' }}>{s.nome}</div>
                   <div style={{ color: '#3b82f6', fontWeight: 'bold', marginTop: '5px' }}>R$ {s.preco}</div>
                 </div>
@@ -494,15 +462,7 @@ function TelaCliente() {
             <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>2. Escolha o Profissional:</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
               {barbeiros.map(b => (
-                <div 
-                  key={b.id} 
-                  onClick={() => setBarbeiroId(b.id)}
-                  style={{ 
-                    padding: '12px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
-                    border: parseInt(barbeiroId) === b.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-                    backgroundColor: parseInt(barbeiroId) === b.id ? '#eff6ff' : '#fff'
-                  }}
-                >
+                <div key={b.id} onClick={() => setBarbeiroId(b.id)} style={{ padding: '12px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', border: parseInt(barbeiroId) === b.id ? '2px solid #3b82f6' : '1px solid #e2e8f0', backgroundColor: parseInt(barbeiroId) === b.id ? '#eff6ff' : '#fff' }}>
                   <div style={{ fontWeight: 'bold', color: '#1e293b' }}>💈 {b.nome}</div>
                 </div>
               ))}
@@ -525,18 +485,18 @@ function TelaCliente() {
 }
 
 // ==========================================
-// 4. O CÉREBRO DAS ROTAS (Aqui a mágica acontece)
+// 4. O CÉREBRO DAS ROTAS
 // ==========================================
 function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<TelaLogin />} />
-        <Route path="/painel" element={<TelaPainel />} />
-        <Route path="/:slug" element={<TelaCliente />} />
-      </Routes>
-    </Router>
-  );
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<TelaLogin />} />
+        <Route path="/painel" element={<TelaPainel />} />
+        <Route path="/:slug" element={<TelaCliente />} />
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;
