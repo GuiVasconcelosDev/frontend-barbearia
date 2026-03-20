@@ -366,150 +366,162 @@ function TelaPainel() {
 // ==========================================
 // 3. TELA PÚBLICA DO CLIENTE (Rota: /:slug )
 // ==========================================
+// ==========================================
+// TELA DO CLIENTE (Rota: /agendar/:slug )
+// ==========================================
 function TelaCliente() {
-  const { slug } = useParams();
-  const [barbearia, setBarbearia] = useState(null);
-  const [servicos, setServicos] = useState([]);
-  const [barbeiros, setBarbeiros] = useState([]);
-  const [erro, setErro] = useState("");
-  const [mensagem, setMensagem] = useState("");
+  const { slug } = useParams();
+  const [barbearia, setBarbearia] = useState(null);
+  const [servicos, setServicos] = useState([]);
+  const [barbeiros, setBarbeiros] = useState([]);
+  const [erro, setErro] = useState("");
+  const [mensagem, setMensagem] = useState("");
 
-  const [clienteNome, setClienteNome] = useState('');
-  const [clienteTelefone, setClienteTelefone] = useState('');
-  const [servicoId, setServicoId] = useState('');
-  const [barbeiroId, setBarbeiroId] = useState('');
-  const [dataHora, setDataHora] = useState('');
+  const [clienteNome, setClienteNome] = useState('');
+  const [clienteTelefone, setClienteTelefone] = useState('');
+  const [servicoId, setServicoId] = useState('');
+  const [barbeiroId, setBarbeiroId] = useState('');
+  const [dataHora, setDataHora] = useState('');
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/barbearias/slug/${slug}`)
-      .then(res => {
-        if (!res.ok) throw new Error("Barbearia não encontrada.");
-        return res.json();
-      })
-      .then(dadosBarbearia => {
-        setBarbearia(dadosBarbearia);
-        return Promise.all([
-          fetch(`${API_URL}/api/servicos/barbearia/${dadosBarbearia.id}`).then(r => r.json()),
-          fetch(`${API_URL}/api/barbeiros/barbearia/${dadosBarbearia.id}`).then(r => r.json())
-        ]);
-      })
-      .then(([dadosServicos, dadosBarbeiros]) => {
-        setServicos(dadosServicos);
-        setBarbeiros(dadosBarbeiros);
-      })
-      .catch(err => setErro(err.message));
-  }, [slug]);
+  useEffect(() => {
+    fetch(`${API_URL}/api/barbearias/slug/${slug}`)
+      .then(res => {
+        if (!res.ok) throw new Error("Barbearia não encontrada.");
+        return res.json();
+      })
+      .then(dadosBarbearia => {
+        setBarbearia(dadosBarbearia);
+        return Promise.all([
+          fetch(`${API_URL}/api/servicos/barbearia/${dadosBarbearia.id}`).then(r => r.json()),
+          fetch(`${API_URL}/api/barbeiros/barbearia/${dadosBarbearia.id}`).then(r => r.json())
+        ]);
+      })
+      .then(([dadosServicos, dadosBarbeiros]) => {
+        setServicos(dadosServicos);
+        setBarbeiros(dadosBarbeiros);
+      })
+      .catch(err => setErro(err.message));
+  }, [slug]);
 
- const agendar = (e) => {
-    e.preventDefault();
-    setMensagem("A agendar...");
-    
-    fetch(`${API_URL}/api/agendamentos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        barbearia: { id: barbearia.id },
-        barbeiro: { id: parseInt(barbeiroId) },
-        servico: { id: parseInt(servicoId) },
-        cliente: { nome: clienteNome, telefone: clienteTelefone },
-        dataHoraInicio: dataHora
-      })
-    })
-    .then(async res => {
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
-    })
-    .then(() => {
-      const servicoEscolhido = servicos.find(s => s.id === parseInt(servicoId));
-      const precoServico = servicoEscolhido?.preco || 0;
-      
-      // ALERTA LIMPO E SEM REDIRECIONAMENTO!
-      alert(`✅ Horário Reservado com sucesso!\n\nSeu agendamento foi salvo na agenda do profissional.\nPara pagamento antecipado, a chave Pix é: ${barbearia.chavePix}\n\nEm breve você receberá notificações automáticas no seu WhatsApp!`);
+ const agendar = (e) => {
+    e.preventDefault();
+    setMensagem("A agendar...");
+    
+    fetch(`${API_URL}/api/agendamentos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        barbearia: { id: barbearia.id },
+        barbeiro: { id: parseInt(barbeiroId) },
+        servico: { id: parseInt(servicoId) },
+        cliente: { nome: clienteNome, telefone: clienteTelefone },
+        dataHoraInicio: dataHora
+      })
+    })
+    .then(async res => {
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    })
+    .then(() => {
+      const servicoEscolhido = servicos.find(s => s.id === parseInt(servicoId));
+      const precoServico = servicoEscolhido?.preco || 0;
+      
+      // ALERTA LIMPO E SEM REDIRECIONAMENTO!
+      alert(`✅ Horário Reservado com sucesso!\n\nSeu agendamento foi salvo na agenda do profissional.\nPara pagamento antecipado, a chave Pix é: ${barbearia.chavePix}\n\nEm breve você receberá notificações automáticas no seu WhatsApp!`);
 
-      setMensagem("");
-      setClienteNome(''); 
-      setClienteTelefone(''); 
-      setDataHora('');
-      setServicoId('');
-      setBarbeiroId('');
-    })
-    .catch(err => setMensagem("❌ " + err.message));
-  };
+      setMensagem("");
+      setClienteNome(''); 
+      setClienteTelefone(''); 
+      setDataHora('');
+      setServicoId('');
+      setBarbeiroId('');
+    })
+    .catch(err => setMensagem("❌ " + err.message));
+  };
 
-  if (erro) return <h1 style={{textAlign: 'center', marginTop: '50px'}}>{erro} 😢</h1>;
-  if (!barbearia) return <h3 style={{textAlign: 'center'}}>A carregar...</h3>;
+  if (erro) return <h1 style={{textAlign: 'center', marginTop: '50px'}}>{erro} 😢</h1>;
+  if (!barbearia) return <h3 style={{textAlign: 'center'}}>A carregar...</h3>;
 
-  return (
-    <div style={{ padding: '30px', maxWidth: '600px', margin: '0 auto', fontFamily: 'system-ui' }}>
-      <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px' }}>✂️ {barbearia.nome}</h1>
-        <p style={{ color: '#64748b', margin: 0 }}>{barbearia.endereco} | 📞 {barbearia.telefone}</p>
-      </div>
+  return (
+    <div style={{ padding: '30px', maxWidth: '600px', margin: '0 auto', fontFamily: 'system-ui' }}>
+      <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+        <h1 style={{ fontSize: '32px', color: '#1e293b', marginBottom: '10px' }}>✂️ {barbearia.nome}</h1>
+        
+        {/* === NOVO BLOCO DO ENDEREÇO === */}
+        <div style={{ backgroundColor: '#f1f5f9', padding: '10px 20px', borderRadius: '8px', display: 'inline-block', marginBottom: '10px' }}>
+          <p style={{ color: '#475569', margin: 0, fontSize: '15px' }}>
+            📍 <strong>Endereço:</strong> {barbearia.endereco || "Endereço não informado"}
+          </p>
+        </div>
+        {/* =============================== */}
 
-      <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
-        <h2 style={{ marginTop: 0, textAlign: 'center', marginBottom: '25px', color: '#0f172a' }}>Agende seu horário</h2>
-        <p style={{ color: '#dc2626', fontWeight: 'bold', textAlign: 'center' }}>{mensagem}</p>
+        <p style={{ color: '#64748b', margin: 0 }}>📞 {barbearia.telefone}</p>
+      </div>
 
-        <form onSubmit={agendar} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <input type="text" placeholder="Seu Nome" value={clienteNome} onChange={e=>setClienteNome(e.target.value)} required style={{ flex: 1, padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px' }} />
-            <input type="tel" placeholder="Seu WhatsApp" value={clienteTelefone} onChange={e=>setClienteTelefone(e.target.value)} required style={{ flex: 1, padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px' }} />
-          </div>
-          
-          <div>
-            <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>1. Escolha o Serviço:</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
-              {servicos.map(s => (
-                <div 
-                  key={s.id} 
-                  onClick={() => setServicoId(s.id)}
-                  style={{ 
-                    padding: '15px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
-                    border: parseInt(servicoId) === s.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-                    backgroundColor: parseInt(servicoId) === s.id ? '#eff6ff' : '#fff'
-                  }}
-                >
-                  <div style={{ fontWeight: 'bold', color: '#1e293b', fontSize: '16px' }}>{s.nome}</div>
-                  <div style={{ color: '#3b82f6', fontWeight: 'bold', marginTop: '5px' }}>R$ {s.preco}</div>
-                </div>
-              ))}
-            </div>
-            <input type="text" value={servicoId} readOnly required style={{ width: 0, height: 0, border: 'none', padding: 0, margin: 0, opacity: 0 }} />
-          </div>
+      <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+        <h2 style={{ marginTop: 0, textAlign: 'center', marginBottom: '25px', color: '#0f172a' }}>Agende seu horário</h2>
+        <p style={{ color: '#dc2626', fontWeight: 'bold', textAlign: 'center' }}>{mensagem}</p>
 
-          <div>
-            <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>2. Escolha o Profissional:</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
-              {barbeiros.map(b => (
-                <div 
-                  key={b.id} 
-                  onClick={() => setBarbeiroId(b.id)}
-                  style={{ 
-                    padding: '12px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
-                    border: parseInt(barbeiroId) === b.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-                    backgroundColor: parseInt(barbeiroId) === b.id ? '#eff6ff' : '#fff'
-                  }}
-                >
-                  <div style={{ fontWeight: 'bold', color: '#1e293b' }}>💈 {b.nome}</div>
-                </div>
-              ))}
-            </div>
-            <input type="text" value={barbeiroId} readOnly required style={{ width: 0, height: 0, border: 'none', padding: 0, margin: 0, opacity: 0 }} />
-          </div>
+        <form onSubmit={agendar} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <input type="text" placeholder="Seu Nome" value={clienteNome} onChange={e=>setClienteNome(e.target.value)} required style={{ flex: 1, padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px' }} />
+            <input type="tel" placeholder="Seu WhatsApp" value={clienteTelefone} onChange={e=>setClienteTelefone(e.target.value)} required style={{ flex: 1, padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px' }} />
+          </div>
+          
+          <div>
+            <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>1. Escolha o Serviço:</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
+              {servicos.map(s => (
+                <div 
+                  key={s.id} 
+                  onClick={() => setServicoId(s.id)}
+                  style={{ 
+                    padding: '15px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
+                    border: parseInt(servicoId) === s.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                    backgroundColor: parseInt(servicoId) === s.id ? '#eff6ff' : '#fff'
+                  }}
+                >
+                  <div style={{ fontWeight: 'bold', color: '#1e293b', fontSize: '16px' }}>{s.nome}</div>
+                  <div style={{ color: '#3b82f6', fontWeight: 'bold', marginTop: '5px' }}>R$ {s.preco}</div>
+                </div>
+              ))}
+            </div>
+            <input type="text" value={servicoId} readOnly required style={{ width: 0, height: 0, border: 'none', padding: 0, margin: 0, opacity: 0 }} />
+          </div>
 
-          <div>
-            <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>3. Escolha a Data e Hora:</label>
-            <input type="datetime-local" value={dataHora} onChange={e=>setDataHora(e.target.value)} required style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px', boxSizing: 'border-box' }} />
-          </div>
+          <div>
+            <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>2. Escolha o Profissional:</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
+              {barbeiros.map(b => (
+                <div 
+                  key={b.id} 
+                  onClick={() => setBarbeiroId(b.id)}
+                  style={{ 
+                    padding: '12px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
+                    border: parseInt(barbeiroId) === b.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                    backgroundColor: parseInt(barbeiroId) === b.id ? '#eff6ff' : '#fff'
+                  }}
+                >
+                  <div style={{ fontWeight: 'bold', color: '#1e293b' }}>💈 {b.nome}</div>
+                </div>
+              ))}
+            </div>
+            <input type="text" value={barbeiroId} readOnly required style={{ width: 0, height: 0, border: 'none', padding: 0, margin: 0, opacity: 0 }} />
+          </div>
 
-          <button type="submit" style={{ marginTop: '10px', padding: '16px', backgroundColor: '#1d4ed8', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', boxShadow: '0 4px 6px rgba(29, 78, 216, 0.3)' }}>
-            Confirmar Agendamento
-          </button>
-        </form>
-      </div>
-    </div>
-  );
+          <div>
+            <label style={{ fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '10px' }}>3. Escolha a Data e Hora:</label>
+            <input type="datetime-local" value={dataHora} onChange={e=>setDataHora(e.target.value)} required style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '16px', boxSizing: 'border-box' }} />
+          </div>
+
+          <button type="submit" style={{ marginTop: '10px', padding: '16px', backgroundColor: '#1d4ed8', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', boxShadow: '0 4px 6px rgba(29, 78, 216, 0.3)' }}>
+            Confirmar Agendamento
+          </button>
+        </form>
+      </div>
+    </div>
+  );
 }
 
 // ==========================================
