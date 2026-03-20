@@ -8,96 +8,101 @@ const API_URL = 'https://barbearia-saas-api-production.up.railway.app';
 // 1. TELA DE LOGIN E CADASTRO (Rota: / )
 // ==========================================
 function TelaLogin() {
-  const navigate = useNavigate();
-  const [modoCadastro, setModoCadastro] = useState(false);
-  const [mensagem, setMensagem] = useState("");
+  const navigate = useNavigate();
+  const [modoCadastro, setModoCadastro] = useState(false);
+  const [mensagem, setMensagem] = useState("");
 
-  // Campos
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [nome, setNome] = useState('');
-  const [telefone, setTelefone] = useState('');
-  const [chavePix, setChavePix] = useState('');
+  // Campos
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [nome, setNome] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [chavePix, setChavePix] = useState('');
+  const [endereco, setEndereco] = useState(''); // <-- 1. NOVO ESTADO ADICIONADO
 
-  
-  useEffect(() => {
-    if (localStorage.getItem('barbeariaLogada')) navigate('/painel');
-  }, [navigate]);
+  
+  useEffect(() => {
+    if (localStorage.getItem('barbeariaLogada')) navigate('/painel');
+  }, [navigate]);
 
-  const submeterFormulario = (e) => {
-    e.preventDefault();
-    setMensagem("A processar...");
+  const submeterFormulario = (e) => {
+    e.preventDefault();
+    setMensagem("A processar...");
 
-    if (modoCadastro) {
-      const slug = nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ /g, '-');
-      fetch(`${API_URL}/api/barbearias`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ nome, slug, telefone, email, senha, chavePix })
-    })
-    .then(async (res) => {
-      if (!res.ok) {
-        const mensagemErro = await res.text();
-        throw new Error(mensagemErro); 
-      }
-      return res.json(); 
-    })
-    .then((novaBarbearia) => {
-      alert("✅ Conta criada com sucesso! Faça o login para acessar o painel.");
-      setModoCadastro(false);
-      setMensagem("");
-    })
-    .catch((erro) => {
-      alert(`❌ ${erro.message}`);
-      setMensagem("");
-    });
-    } else {
-      fetch(`${API_URL}/api/barbearias/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha })
-      })
-      .then(res => res.ok ? res.json() : Promise.reject("Credenciais inválidas."))
-      .then(dados => {
-        localStorage.setItem('barbeariaLogada', JSON.stringify(dados));
-        navigate('/painel');
-      })
-      .catch(err => setMensagem("❌ " + err));
-    }
-  };
+    if (modoCadastro) {
+      const slug = nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ /g, '-');
+      fetch(`${API_URL}/api/barbearias`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      // <-- 2. ENDEREÇO INCLUÍDO NO ENVIO PARA O JAVA
+      body: JSON.stringify({ nome, slug, telefone, email, senha, chavePix, endereco }) 
+    })
+    .then(async (res) => {
+      if (!res.ok) {
+        const mensagemErro = await res.text();
+        throw new Error(mensagemErro); 
+      }
+      return res.json(); 
+    })
+    .then((novaBarbearia) => {
+      alert("✅ Conta criada com sucesso! Faça o login para acessar o painel.");
+      setModoCadastro(false);
+      setMensagem("");
+    })
+    .catch((erro) => {
+      alert(`❌ ${erro.message}`);
+      setMensagem("");
+    });
+    } else {
+      fetch(`${API_URL}/api/barbearias/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha })
+      })
+      .then(res => res.ok ? res.json() : Promise.reject("Credenciais inválidas."))
+      .then(dados => {
+        localStorage.setItem('barbeariaLogada', JSON.stringify(dados));
+        navigate('/painel');
+      })
+      .catch(err => setMensagem("❌ " + err));
+    }
+  };
 
-  return (
-    <div style={{ padding: '50px 20px', maxWidth: '400px', margin: '0 auto', fontFamily: 'system-ui' }}>
-      <h1 style={{ textAlign: 'center' }}>SaaS Barbearia ✂️</h1>
-      <p style={{ color: '#dc2626', textAlign: 'center', fontWeight: 'bold' }}>{mensagem}</p>
-      
-      <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ marginTop: 0 }}>{modoCadastro ? 'Criar Conta' : 'Entrar no Painel'}</h2>
-        <form onSubmit={submeterFormulario} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          {modoCadastro && (
-            <>
-              <input type="text" placeholder="Nome da Barbearia" value={nome} onChange={e=>setNome(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
-              <input type="text" placeholder="Telefone" value={telefone} onChange={e=>setTelefone(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
-              <input type="text" placeholder="Sua Chave Pix (CPF/Email/Celular)" value={chavePix} onChange={e=>setChavePix(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
-            </>
-          )}
-          <input type="email" placeholder="E-mail" value={email} onChange={e=>setEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
-          <input type="password" placeholder="Senha" value={senha} onChange={e=>setSenha(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
-          <button type="submit" style={{ padding: '14px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
-            {modoCadastro ? 'Registar' : 'Entrar'}
-          </button>
-        </form>
-        <p style={{ marginTop: '20px', fontSize: '14px', textAlign: 'center' }}>
-          {modoCadastro ? 'Já tem conta? ' : 'Não tem conta? '}
-          <span onClick={() => {setModoCadastro(!modoCadastro); setMensagem("");}} style={{ color: '#2563eb', cursor: 'pointer', fontWeight: 'bold' }}>
-            {modoCadastro ? 'Faça Login' : 'Crie a sua barbearia'}
-          </span>
-        </p>
-      </div>
-    </div>
-  );
+  return (
+    <div style={{ padding: '50px 20px', maxWidth: '400px', margin: '0 auto', fontFamily: 'system-ui' }}>
+      <h1 style={{ textAlign: 'center' }}>SaaS Barbearia ✂️</h1>
+      <p style={{ color: '#dc2626', textAlign: 'center', fontWeight: 'bold' }}>{mensagem}</p>
+      
+      <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+        <h2 style={{ marginTop: 0 }}>{modoCadastro ? 'Criar Conta' : 'Entrar no Painel'}</h2>
+        <form onSubmit={submeterFormulario} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          {modoCadastro && (
+            <>
+              <input type="text" placeholder="Nome da Barbearia" value={nome} onChange={e=>setNome(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
+              <input type="text" placeholder="Telefone" value={telefone} onChange={e=>setTelefone(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
+              <input type="text" placeholder="Sua Chave Pix (CPF/Email/Celular)" value={chavePix} onChange={e=>setChavePix(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
+              
+              {/* <-- 3. NOVO CAMPO DE ENDEREÇO AQUI */}
+              <input type="text" placeholder="Endereço (Rua, Número, Bairro, Cidade)" value={endereco} onChange={e=>setEndereco(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
+            </>
+          )}
+          <input type="email" placeholder="E-mail" value={email} onChange={e=>setEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
+          <input type="password" placeholder="Senha" value={senha} onChange={e=>setSenha(e.target.value)} required style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc' }} />
+          <button type="submit" style={{ padding: '14px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+            {modoCadastro ? 'Registar' : 'Entrar'}
+          </button>
+        </form>
+        <p style={{ marginTop: '20px', fontSize: '14px', textAlign: 'center' }}>
+          {modoCadastro ? 'Já tem conta? ' : 'Não tem conta? '}
+          <span onClick={() => {setModoCadastro(!modoCadastro); setMensagem("");}} style={{ color: '#2563eb', cursor: 'pointer', fontWeight: 'bold' }}>
+            {modoCadastro ? 'Faça Login' : 'Crie a sua barbearia'}
+          </span>
+        </p>
+      </div>
+    </div>
+  );
 }
 
 // ==========================================
