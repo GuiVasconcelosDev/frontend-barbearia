@@ -422,7 +422,7 @@ function TelaCliente() {
     .catch(err => setMensagem("❌ " + err.message));
   };
 
-  if (erro) return <h1 style={{textAlign: 'center', marginTop: '50px'}}>{erro} Não paguei a hospedagem, to pobre 😢</h1>;
+  if (erro) return <h1 style={{textAlign: 'center', marginTop: '50px'}}> Não paguei a hospedagem, to pobre 😢</h1>;
   if (!barbearia) return <h3 style={{textAlign: 'center'}}>A carregar...</h3>;
 
   return (
