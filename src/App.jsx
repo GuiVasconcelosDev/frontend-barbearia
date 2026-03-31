@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useParams, Link } from 'react-router-dom';
 import './App.css';
 
-const API_URL = 'https://barbearia-saas-api-production.up.railway.app';
+const API_URL = import.meta.env.VITE_API_URL;
 
-// Função auxiliar para pegar o token
 const getToken = () => localStorage.getItem('tokenSaaS');
 
 // ==========================================
